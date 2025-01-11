@@ -13,8 +13,11 @@ public static class DependencyHelper {
     public static IServiceCollection ServerToolsAddConfigurationHelper(this IServiceCollection services) =>
         services.AddSingleton<ConfigurationHelper>();
 
+    /// <summary>
+    /// Default local credential
+    /// </summary>
     public static IServiceCollection ServerToolsAddDefaultCredential(this IServiceCollection services) =>
-        services.AddSingleton<DefaultCredential>();
+        services.AddSingleton<IDefaultCredential, DefaultCredential>();
 
     /// <summary>
     /// Add the key vault service to the service collection.
@@ -25,7 +28,7 @@ public static class DependencyHelper {
     /// Requires the DefaultCredential service to be registered. See <see cref="ServerToolsAddDefaultCredential()"/>.
     /// </remarks>
     public static IServiceCollection ServerToolsAddKeyVault(this IServiceCollection services) {
-        services.AddSingleton<IAzureKeyVaultService, AzureKeyVaultService<DefaultCredential>>();
+        services.AddSingleton<IAzureKeyVaultService, AzureKeyVaultService<IDefaultCredential>>();
         return services.AddSingleton<IAzureKeyVaultConfiguration, AzureKeyVaultConfiguration>(static impl => {
             var configHelper = impl.GetService<ConfigurationHelper>() ?? throw new InvalidOperationException("ConfigurationHelper service is not available.");
             var config = configHelper.TryGet<AzureKeyVaultConfiguration>() ?? throw new InvalidOperationException("AzureKeyVaultConfiguration could not be retrieved.");
@@ -40,14 +43,16 @@ public static class DependencyHelper {
     /// Requires the ConfigurationHelper service to be registered. See <see cref="ServerToolsAddConfigurationHelper()"/>.
     /// Requires the SecretResolver service to be registered. See <see cref="ServerToolsAddSecretResolver()"/>.
     /// </remarks>
-    public static IServiceCollection ServerToolsAddServicePrincipal(this IServiceCollection services) =>
-        services.AddSingleton<ServicePrincipalConfiguration>(static impl => {
+    public static IServiceCollection ServerToolsAddServicePrincipal(this IServiceCollection services) {
+        return services
+            .AddSingleton<ServicePrincipalConfiguration>(static impl => {
             var configHelper = impl.GetService<ConfigurationHelper>() ?? throw new InvalidOperationException("ConfigurationHelper service is not available.");
             var config = configHelper.TryGet<ServicePrincipalConfiguration>() ?? throw new InvalidOperationException("ServicePrincipalConfiguration could not be retrieved.");
             ISecretResolver secretResolver = impl.GetService<ISecretResolver>() ?? throw new InvalidOperationException("ISecretResolver service is not available.");
             config.SecretResolver = secretResolver;
             return config;
-        });
+            }).AddSingleton<IServicePrincipalCredential<ServicePrincipalConfiguration>, ServicePrincipalCredential<ServicePrincipalConfiguration>>();
+    }
 
     public static IServiceCollection ServerToolsAddJsonLogger(this IServiceCollection services) => 
         services.AddSingleton<IJsonLogger, JsonLogger>();
@@ -59,4 +64,19 @@ public static class DependencyHelper {
     /// Key Vault Resolver is required to be registered. See <see cref="ServerToolsAddKeyVault()"/>.
     public static IServiceCollection ServerToolsAddSecretResolver(this IServiceCollection services) =>
         services.AddSingleton<ISecretResolver, SecretResolver>();
+
+    /// <summary>
+    /// Add the SQL service to the service collection.
+    /// </summary>
+    public static IServiceCollection ServerToolsAddSqlService<T>(this IServiceCollection services) 
+        where T: ISqlServerDatabaseConfiguration {
+            return services.AddSingleton<ISqlServerService<T>, SqlServerService<T>>();
+    }
+
+    /// <summary>
+    /// Adds a generic request context.
+    /// </summary>
+    public static IServiceCollection ServerToolsAddRequestContext<T>(this IServiceCollection services) 
+        where T: class, IRequestContext, new() =>
+        services.AddSingleton<IRequestContextAccessor, RequestContextAccessor<T>>();
 }

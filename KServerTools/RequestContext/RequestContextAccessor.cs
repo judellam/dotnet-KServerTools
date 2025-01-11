@@ -2,16 +2,15 @@ using Microsoft.AspNetCore.Http;
 
 namespace KServerTools.Common;
 
-internal class RequestContextAccessor<T> : IRequestContextAccessor<T> where T : class, IRequestContext, new() {
-    private readonly IHttpContextAccessor httpContextAccessor;
+internal class RequestContextAccessor<T>(IHttpContextAccessor httpContextAccessor) : IRequestContextAccessor where T : class, IRequestContext, new() {
+    private readonly IHttpContextAccessor httpContextAccessor = httpContextAccessor;
 
+    /// <summary>
+    /// Cache for the request context. Scoped to the request thread.
+    /// </summary>
     private AsyncLocal<T> requestContextCache = new();
 
-    public RequestContextAccessor(IHttpContextAccessor httpContextAccessor) {
-        this.httpContextAccessor = httpContextAccessor;
-    }
-
-    public T? GetRequestContext() {
+    public IRequestContext? GetRequestContext() {
         if (this.httpContextAccessor == null || this.httpContextAccessor.HttpContext == null) {
             return null;
         }

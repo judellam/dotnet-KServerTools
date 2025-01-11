@@ -3,7 +3,7 @@ namespace KServerTools.Common;
 using Azure.Core;
 using Azure.Identity;
 
-public class DefaultCredential : ICredentialResolver {
+public class DefaultCredential : IDefaultCredential {
     /// <summary>
     /// Retrieves the default Azure credential.
     /// </summary>

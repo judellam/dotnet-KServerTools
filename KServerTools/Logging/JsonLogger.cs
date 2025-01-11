@@ -13,10 +13,10 @@ using Microsoft.AspNetCore.Http;
 internal class JsonLogger(
     IHttpContextAccessor accessor,
     ILogger<JsonLogger> logger,
-    IRequestContextAccessor<RequestContext> requestContextAccessor) : IJsonLogger {
+    IRequestContextAccessor requestContextAccessor) : IJsonLogger {
     private readonly IHttpContextAccessor accessor = accessor;
     private readonly ILogger logger = logger;
-    private readonly IRequestContextAccessor<RequestContext> requestContextAccessor = requestContextAccessor;
+    private readonly IRequestContextAccessor requestContextAccessor = requestContextAccessor;
     private static readonly JsonSerializerOptions LoggingSerializationOptions = new() {
         DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
     };
