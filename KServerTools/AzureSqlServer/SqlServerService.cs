@@ -61,7 +61,7 @@ internal class SqlServerService<T>(
         return await onRead(reader);
     }
 
-    public async Task<SqlConnection> GetOrCreateConnection(CancellationToken cancellationToken) {
+    public virtual async Task<SqlConnection> GetOrCreateConnection(CancellationToken cancellationToken) {
         if (!string.IsNullOrEmpty(this.config.ConnectionStringData)) {
             return new SqlConnection(await this.config.GetConnectionString(cancellationToken));
         }
@@ -96,4 +96,13 @@ internal class SqlServerService<T>(
 
         return connection;
     }
+}
+
+/// <summary>
+/// When only a connection string is provided.
+/// </summary>
+internal class SqlServerConnstionString<T>(T config, IJsonLogger logger) 
+    : SqlServerService<T>(config, logger, null!)
+    where T : ISqlServerDatabaseConfiguration
+{
 }

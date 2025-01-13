@@ -6,7 +6,6 @@ using Microsoft.Extensions.DependencyInjection;
 /// Helper class for dependency injection.
 /// </summary>
 public static class DependencyHelper {
-    
     /// <summary>
     /// Add the configuration helper to the service collection. This helps parse the appsettions.json file.
     /// </summary>
@@ -68,10 +67,11 @@ public static class DependencyHelper {
     /// <summary>
     /// Add the SQL service to the service collection.
     /// </summary>
-    public static IServiceCollection ServerToolsAddSqlService<T>(this IServiceCollection services) 
-        where T: ISqlServerDatabaseConfiguration {
-            return services.AddSingleton<ISqlServerService<T>, SqlServerService<T>>();
-    }
+    public static IServiceCollection ServerToolsAddSqlService<T>(this IServiceCollection services, bool connectionStringOnly = false)
+        where T: ISqlServerDatabaseConfiguration  =>
+        connectionStringOnly ? 
+            services.AddSingleton<ISqlServerService<T>, SqlServerConnstionString<T>>() :
+            services.AddSingleton<ISqlServerService<T>, SqlServerService<T>>();
 
     /// <summary>
     /// Adds a generic request context.
