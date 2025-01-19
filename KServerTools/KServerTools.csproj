@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <!-- Nuget Info -->
     <PackageId>KServerTools</PackageId>
-    <Version>1.0.3</Version>
+    <Version>1.0.4</Version>
     <Authors>judellam</Authors>
     <Description>Common set of tools used to interact with Azure and a Kestrel Service</Description>
     <PackageTag>kestrel, azure, tools</PackageTag>
