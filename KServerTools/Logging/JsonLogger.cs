@@ -53,10 +53,36 @@ internal class JsonLogger(
         this.logger.LogInformation(logEvent);
     }
 
+    public void IfInfo(
+        bool condition,
+        string message,
+        long? latency = null, 
+        [CallerFilePath] string filePath = "",
+        [CallerLineNumber] int lineNumber = 0,
+        [CallerMemberName] string memberName = "") {
+        if (condition) {
+            this.Info(message, latency, filePath, lineNumber, memberName);
+        }
+    }    
+
+    public void IfError(
+        bool condition,
+        string message,
+        Exception exception,
+        long? latency = null,
+        [CallerFilePath] string filePath = "",
+        [CallerLineNumber] int lineNumber = 0,
+        [CallerMemberName] string memberName = "") {
+        if (condition) {
+            this.Error(message, exception, latency, filePath, lineNumber, memberName);
+        }
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private string GetLogEvent(LogLevel logLevel, string message, Exception? exception, string filePath, int lineNumber, string memberName, long? latency = null) {
         IRequestContext? requestContext = this.requestContextAccessor.GetRequestContext();
         LogEvent logEvent = new() {
+            UserAgent = requestContext?.UserAgent ?? string.Empty,
             Message = message,
             Level = logLevel.ToString(),
             ExceptionType = exception?.GetType().ToString() ?? null,

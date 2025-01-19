@@ -12,6 +12,11 @@ public interface IRequestContext {
     public Guid RequestId { get; }
 
     /// <summary>
+    /// The user agent of the request.
+    /// </summary>
+    public string? UserAgent { get; }
+
+    /// <summary>
     /// Called for setup of the request context.
     /// </summary>
     /// <param name="context"></param>

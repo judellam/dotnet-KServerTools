@@ -1,6 +1,8 @@
 namespace KServerTools.Common;
 
 internal class LogEvent {
+    public DateTime Timestamp { get; set; } = DateTime.UtcNow;
+    public required string UserAgent { get; set; }
     public required string Level { get; set; }
     public required string Message { get; set; }
     public long? Latency { get; set; } = null;

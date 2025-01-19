@@ -7,6 +7,23 @@ using System.Runtime.CompilerServices;
 /// In addition it captures the callers file path, line number, and member name for better debugging.
 /// </summary>
 public interface IJsonLogger {
+    void IfInfo(
+        bool condition,
+        string message,
+        long? latency = null,
+        [CallerFilePath] string filePath = "",
+        [CallerLineNumber] int lineNumber = 0,
+        [CallerMemberName] string memberName = "");
+
+    void IfError(
+        bool condition,
+        string message,
+        Exception exception,
+        long? latency = null,
+        [CallerFilePath] string filePath = "",
+        [CallerLineNumber] int lineNumber = 0,
+        [CallerMemberName] string memberName = "");
+
     void Info(
         string message,
         long? latency = null,

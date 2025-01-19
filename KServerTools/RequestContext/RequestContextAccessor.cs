@@ -1,6 +1,6 @@
-using Microsoft.AspNetCore.Http;
-
 namespace KServerTools.Common;
+
+using Microsoft.AspNetCore.Http;
 
 internal class RequestContextAccessor<T>(IHttpContextAccessor httpContextAccessor) : IRequestContextAccessor where T : class, IRequestContext, new() {
     private readonly IHttpContextAccessor httpContextAccessor = httpContextAccessor;
