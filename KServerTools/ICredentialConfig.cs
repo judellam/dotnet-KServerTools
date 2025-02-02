@@ -4,23 +4,17 @@ namespace KServerTools.Common;
 /// Interface for a credential configuration in Azure.
 /// </summary>
 public interface ICredentialConfig {
-    /// <summary>
-    /// The application id of the service principal.
-    /// </summary>
-    string ApplicationId { get; set; }
-
-    /// <summary>
-    /// The tenant id of the service principal.
-    /// </summary>
-    string TenantId { get; set; }
-
-    /// <summary>
-    /// The secret resolver should operate on this data. See <see cref="GetResolvedSecret"/> in ServicePrincipalCredential.
-    /// </summary>
-    string SecretData { get; }
+    public ServiceCredentalType CredentialType { get; }
 
     /// <summary>
     /// Get the resolved secret.
     /// </summary>
     Task<string> GetResolvedSecret(CancellationToken cancellationToken);
+}
+
+public interface IServicePrincipalConfig : ICredentialConfig {
+    public string ApplicationId { get; set; }
+    public string TenantId { get; set; }
+    public string SecretData { get; set; }
+    public ISecretResolver? SecretResolver { get; set; } // needs to be set via DI
 }

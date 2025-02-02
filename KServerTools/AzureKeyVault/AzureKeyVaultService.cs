@@ -15,7 +15,7 @@ using System.Security.Cryptography.X509Certificates;
 /// Requires: dotnet add package Microsoft.Extensions.Caching.Memory
 /// Requires: dotnet add package Azure.Security.KeyVault.Secrets
 /// </remarks>
-internal class AzureKeyVaultService<T> : IAzureKeyVaultService where T: ICredentialResolver {
+internal class AzureKeyVaultService<T> : IAzureKeyVaultService where T: ITokenCredentialService {
     private readonly IAzureKeyVaultConfiguration azureKeyVaultConfiguration;
     private readonly T credentialResolver;
     private readonly IMemoryCache memoryCache;

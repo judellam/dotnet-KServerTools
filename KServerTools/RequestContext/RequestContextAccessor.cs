@@ -8,7 +8,7 @@ internal class RequestContextAccessor<T>(IHttpContextAccessor httpContextAccesso
     /// <summary>
     /// Cache for the request context. Scoped to the request thread.
     /// </summary>
-    private AsyncLocal<T> requestContextCache = new();
+    private readonly AsyncLocal<T> requestContextCache = new();
 
     public IRequestContext? GetRequestContext() {
         if (this.httpContextAccessor == null || this.httpContextAccessor.HttpContext == null) {

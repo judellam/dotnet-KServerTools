@@ -41,7 +41,7 @@ public class BadRequestException : ServiceException {
 public class InternalServerErrorException : ServiceException {
     public InternalServerErrorException(string message) : base(ServiceError.InternalServerError, message) { }
     public InternalServerErrorException(string message, Exception exception) : base(ServiceError.InternalServerError, message, exception) { }
-    public static object? ThrowIfArgumentIsNull(object? o, string argument, string message = "") => o ?? throw new InternalServerErrorException(message ?? "Internal Server Error");
+    public static object? ThrowIfArgumentIsNull(object? o, string message = "") => o ?? throw new InternalServerErrorException(message ?? "Internal Server Error");
 }
 
 public class ConflictException : ServiceException {

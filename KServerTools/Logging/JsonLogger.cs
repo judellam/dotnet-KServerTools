@@ -1,55 +1,46 @@
 namespace KServerTools.Common;
 
-using System.Text.Json;
-using System.Text.Json.Serialization;
 using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
 
 // Future work:
 // 1. Add support for additional loggers to be passed in to build a chain (ie: can we log to disk, azure storage, etc).
-// 2. Add support for conditional logging (ie: if something meets a certain criteria, log it).
-// 3. Allow for custom log events to be defined.
-internal class JsonLogger(
-    IHttpContextAccessor accessor,
-    ILogger<JsonLogger> logger,
-    IRequestContextAccessor requestContextAccessor) : IJsonLogger {
+// 2. Allow for custom log events to be defined.
+internal class JsonLogger(IHttpContextAccessor accessor, ILogger<JsonLogger> logger, IRequestContextAccessor requestContextAccessor) : IJsonLogger {
     private readonly IHttpContextAccessor accessor = accessor;
     private readonly ILogger logger = logger;
     private readonly IRequestContextAccessor requestContextAccessor = requestContextAccessor;
-    private static readonly JsonSerializerOptions LoggingSerializationOptions = new() {
-        DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
-    };
 
-    public void Error(
+    public virtual void Error(
         string message,
         Exception exception,
         long? latency = null,
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0,
         [CallerMemberName] string memberName = "") {
-        string logEvent = GetLogEvent(LogLevel.Error, message, exception, filePath, lineNumber, memberName, latency);
-        this.logger.LogInformation(logEvent);
+        string logEvent = LoggingUtilities.GetLogEvent(LogLevel.Error, message, exception, filePath, lineNumber, memberName, accessor, requestContextAccessor, latency);
+        this.logger.LogError(logEvent);
     }
 
-    public void Warn(
+    public virtual void Warn(
         string message,
         Exception? exception = null,
         long? latency = null,
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0,
         [CallerMemberName] string memberName = "") {
-        string logEvent = GetLogEvent(LogLevel.Warning, message, exception, filePath, lineNumber, memberName, latency);
-        this.logger.LogInformation(logEvent);
+        string logEvent = LoggingUtilities.GetLogEvent(LogLevel.Error, message, exception, filePath, lineNumber, memberName, accessor, requestContextAccessor, latency);
+        this.logger.LogWarning(logEvent);
     }
 
-    public void Info(
+    public virtual void Info(
         string message,
         long? latency = null,
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0,
         [CallerMemberName] string memberName = "") {
-        string logEvent = GetLogEvent(LogLevel.Information, message, null, filePath, lineNumber, memberName, latency);
+        string logEvent = LoggingUtilities.GetLogEvent(LogLevel.Error, message, null, filePath, lineNumber, memberName, accessor, requestContextAccessor, latency);
         this.logger.LogInformation(logEvent);
     }
 
@@ -76,29 +67,5 @@ internal class JsonLogger(
         if (condition) {
             this.Error(message, exception, latency, filePath, lineNumber, memberName);
         }
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private string GetLogEvent(LogLevel logLevel, string message, Exception? exception, string filePath, int lineNumber, string memberName, long? latency = null) {
-        IRequestContext? requestContext = this.requestContextAccessor.GetRequestContext();
-        LogEvent logEvent = new() {
-            UserAgent = requestContext?.UserAgent ?? string.Empty,
-            Message = message,
-            Level = logLevel.ToString(),
-            ExceptionType = exception?.GetType().ToString() ?? null,
-            ExceptionMessage = exception?.Message ?? null,
-            RequestId = requestContext?.RequestId.ToString() ?? Guid.Empty.ToString(),
-            Url = this.accessor?.HttpContext?.Request.Path ?? null,
-            Method = this.accessor?.HttpContext?.Request.Method ?? string.Empty,
-            StatusCode = this.accessor?.HttpContext?.Response.StatusCode.ToString() ?? null,
-            FilePath = filePath,
-            LineNumber = lineNumber.ToString(),
-            MemberName = memberName,
-            Latency = latency
-        };
-
-        return JsonSerializer.Serialize(
-            logEvent, 
-            LoggingSerializationOptions);
     }
 }

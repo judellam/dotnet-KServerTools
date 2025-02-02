@@ -2,10 +2,9 @@ namespace KServerTools.Common;
 
 using Azure.Core;
 
-/// <summary>
-/// Defines a method to resolve credentials.
-/// </summary>
-public interface ICredentialResolver {
+public interface ITokenCredentialService {
+    AccessToken GetToken(TokenRequestContext requestContext, CancellationToken cancellationToken);
+    ValueTask<AccessToken> GetTokenAsync(TokenRequestContext requestContext, CancellationToken cancellationToken);
     /// <summary>
     /// Retrieves the credential.
     /// </summary>

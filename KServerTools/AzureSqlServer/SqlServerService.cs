@@ -1,5 +1,6 @@
 namespace KServerTools.Common;
 
+using Azure.Core;
 using Microsoft.Data.SqlClient;
 
 /// <summary>
@@ -9,7 +10,6 @@ using Microsoft.Data.SqlClient;
 /// <typeparam name="T">The configuration for the database.</typeparam>
 /// <param name="config"></param>
 /// <param name="logger"></param>
-/// <param name="servicePrincipalCredential"></param>
 /// <remarks>
 /// Required package: Microsoft.Data.SqlClient
 /// Example configuration found in appsettings.json:
@@ -22,14 +22,10 @@ using Microsoft.Data.SqlClient;
 ///     ]
 ///   }
 /// </remarks>
-internal class SqlServerService<T>(
-    T config,
-    IJsonLogger logger, 
-    IServicePrincipalCredential<ServicePrincipalConfiguration> servicePrincipalCredential) 
-        : ISqlServerService<T> where T : ISqlServerDatabaseConfiguration {
+internal class SqlServerService<T, C>(T config, IJsonLogger logger, C credential) : ISqlServerService<T> where T : ISqlServerDatabaseConfiguration where C: class, ITokenCredentialService{
     private readonly T config = config;
     private readonly IJsonLogger logger = logger;
-    private readonly IServicePrincipalCredential<ServicePrincipalConfiguration>? servicePrincipalCredential = servicePrincipalCredential;
+    private readonly C? credential = credential;
 
     public async Task<int> NonQueryAsync(string query, IList<SqlParameter>? parameters, CancellationToken cancellationToken) {
         InternalServerErrorException.ThrowIfArgumentIsNull(query, nameof(query));
@@ -67,11 +63,11 @@ internal class SqlServerService<T>(
         }
 
         InternalServerErrorException.ThrowIfArgumentIsNull(
-            this.servicePrincipalCredential,
-            nameof(this.servicePrincipalCredential));
+            this.credential,
+            nameof(this.credential));
 
-        string accessToken = await this.servicePrincipalCredential!
-            .GetAccessToken(this.config.Scopes, cancellationToken)
+        AccessToken accessToken = await this.credential!
+            .GetTokenAsync(new TokenRequestContext(this.config.Scopes), cancellationToken)
             .ConfigureAwait(false);
 
         SqlConnectionStringBuilder sqlConnectionStringBuilder = new() {
@@ -82,7 +78,7 @@ internal class SqlServerService<T>(
         };
 
         SqlConnection connection = new(sqlConnectionStringBuilder.ConnectionString) {
-            AccessToken = accessToken
+            AccessToken = accessToken.Token
         };
 
         // Depending on SQL server, initial connection may fail incase if you have a WoL (wake on lan) type of Azure Sql Server.
@@ -102,7 +98,7 @@ internal class SqlServerService<T>(
 /// When only a connection string is provided.
 /// </summary>
 internal class SqlServerConnstionString<T>(T config, IJsonLogger logger) 
-    : SqlServerService<T>(config, logger, null!)
+    : SqlServerService<T, ITokenCredentialService>(config, logger, null!)
     where T : ISqlServerDatabaseConfiguration
 {
 }

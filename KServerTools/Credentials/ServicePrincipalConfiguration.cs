@@ -3,7 +3,7 @@ namespace KServerTools.Common;
 /// <summary>
 /// Represents the configuration settings for a service principal.
 /// </summary>
-public class ServicePrincipalConfiguration : ICredentialConfig {
+public class ServicePrincipalConfiguration : IServicePrincipalConfig {
     private string? secret = null;
     private DateTimeOffset credentialExpiration = DateTimeOffset.MinValue;
     /// <summary>
@@ -15,10 +15,11 @@ public class ServicePrincipalConfiguration : ICredentialConfig {
     /// </summary>
     public required string TenantId { get; set; }
     public required string SecretData { get; set; }
-    public ISecretResolver? SecretResolver { get; internal set; } // needs to be set via DI
+    public ServiceCredentalType CredentialType { get => ServiceCredentalType.ServicePrincipal; }
+    public ISecretResolver? SecretResolver { get; set; }
 
     public async Task<string> GetResolvedSecret(CancellationToken cancellationToken) {
-        InternalServerErrorException.ThrowIfArgumentIsNull(this.SecretResolver, "SecretResolver must be set before calling GetResolvedSecret");
+        InternalServerErrorException.ThrowIfArgumentIsNull(this.SecretResolver, "SecretResolver must be set before calling GetResolvedSecret. This must be done during dependency injection.");
         if (this.secret == null || DateTimeOffset.UtcNow > this.credentialExpiration) {
             this.credentialExpiration = DateTimeOffset.UtcNow.AddMinutes(45);
             this.secret = await this.SecretResolver!

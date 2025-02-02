@@ -17,28 +17,18 @@ using Azure.Identity;
 ///    "SecretData": "akv://SpClientSecret"
 ///  },
 /// </remarks>
-internal class ServicePrincipalCredential<T>(T config) : IServicePrincipalCredential<T> where T: ICredentialConfig {
-    private readonly T config = config;
-    private string? accessToken;
-    private DateTimeOffset? accessTokenExpiresOn;
-
-    public async Task<string> GetAccessToken(string[] scopes, CancellationToken cancellationToken) {
-        if (this.accessToken is null || this.accessTokenExpiresOn is null || this.accessTokenExpiresOn < DateTimeOffset.UtcNow) {
-            TokenCredential credential = await this.GetCredential(cancellationToken);
-            AccessToken token = await credential.GetTokenAsync(new TokenRequestContext(scopes), cancellationToken)
-                .ConfigureAwait(false);
-            this.accessToken = token.Token;
-            this.accessTokenExpiresOn = token.ExpiresOn.AddMinutes(-10);
-        }
-
-        return this.accessToken;
+internal class ServicePrincipalCredential<T>(T config) : TokenCredentialBase<T>(config), IServicePrincipalCredential<T> where T: IServicePrincipalConfig {
+    public override async Task<TokenCredential> GetCredential(CancellationToken cancellationToken) {
+        string secret = await this.Config.GetResolvedSecret(cancellationToken).ConfigureAwait(false);
+        return new ClientSecretCredential(
+            this.Config.TenantId, 
+            this.Config.ApplicationId, 
+            secret);
     }
 
-    public async Task<TokenCredential> GetCredential(CancellationToken cancellationToken) {
-        string secret = await config.GetResolvedSecret(cancellationToken).ConfigureAwait(false);
-        return new ClientSecretCredential(
-            this.config.TenantId, 
-            this.config.ApplicationId, 
-            secret);
+    protected override async ValueTask<AccessToken> GetAccessTokenInternal(string[] scopes, CancellationToken cancellationToken) {
+        TokenCredential tokenCredential = await this.GetCredential(cancellationToken);
+        return await tokenCredential.GetTokenAsync(new TokenRequestContext(scopes), cancellationToken)
+            .ConfigureAwait(false);
     }
 }

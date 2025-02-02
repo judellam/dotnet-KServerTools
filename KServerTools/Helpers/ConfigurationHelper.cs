@@ -16,9 +16,9 @@ public class ConfigurationHelper(IConfiguration configuration) {
     public T? TryGet<T>() where T : class => 
         this.TryGet<T>(typeof(T).Name);
 
-    public T? TryGet<T>(string property) where T: class {  
+    public T? TryGet<T>(string sectionName) where T: class {  
         try {
-            var section = this.configuration.GetSection(property);
+            var section = this.configuration.GetSection(sectionName);
             if (section != null) {
                 var result = section.Get<T>();
                 return result ?? null;
