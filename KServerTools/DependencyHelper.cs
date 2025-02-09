@@ -1,6 +1,6 @@
 namespace KServerTools.Common;
 
-using Azure.Core.Pipeline;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
@@ -20,7 +20,9 @@ public static class DependencyHelper {
     /// </summary>
     public static IServiceCollection KSTAddRequestContext<T>(this IServiceCollection services) 
         where T: class, IRequestContext, new() =>
-        services.AddSingleton<IRequestContextAccessor, RequestContextAccessor<T>>();
+        services
+            .AddSingleton<IRequestContextAccessor, RequestContextAccessor<T>>()
+            .AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
 
     /// <summary>
     /// Provide the section name and your class implementation for IServicePrincipalConfig for config class to register a service principal credential.
@@ -85,12 +87,16 @@ public static class DependencyHelper {
     /// <summary>
     /// Add the SQL service to the service collection.
     /// </summary>
-    public static IServiceCollection KSTAddSqlService<T, C>(this IServiceCollection services, bool connectionStringOnly = false)
+    public static IServiceCollection KSTAddSqlService<T, C>(this IServiceCollection services)
         where T: ISqlServerDatabaseConfiguration  
         where C: class, ITokenCredentialService =>
-        connectionStringOnly ? 
-            services.AddSingleton<ISqlServerService<T>, SqlServerConnstionString<T>>() :
             services.AddSingleton<ISqlServerService<T>, SqlServerService<T, C>>();
+
+    /// <summary>
+    /// Add the SQL service to the service collection.
+    /// </summary>
+    public static IServiceCollection KSTAddSqlServiceConnectionString<T>(this IServiceCollection services)
+        where T: ISqlServerDatabaseConfiguration => services.AddSingleton<ISqlServerService<T>, SqlServerConnstionString<T>>();
 
     private static ConfigurationHelper GetConfigurationHelper(this IServiceProvider provider) =>
         provider.GetService<ConfigurationHelper>() ?? throw new InvalidOperationException("ConfigurationHelper service is not available.");

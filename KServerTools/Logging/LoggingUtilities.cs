@@ -24,7 +24,7 @@ internal static class LoggingUtilities {
             Url = accessor?.HttpContext?.Request.Path ?? null,
             Method = accessor?.HttpContext?.Request.Method ?? string.Empty,
             StatusCode = accessor?.HttpContext?.Response.StatusCode.ToString() ?? null,
-            FilePath = filePath,
+            FilePath = Path.GetFileName(filePath),
             LineNumber = lineNumber.ToString(),
             MemberName = memberName,
             Latency = latency
