@@ -26,21 +26,39 @@ Here's a basic example of how to use KServerTools in your Kestrel server:
 using KServerTools.Common;
 
 var builder = WebApplication.CreateBuilder(args);
+IServiceCollection services = builder.Services;
+services.AddControllers();
+services
+    // KST Add-ons
+    .KSTAddRequestContext<RequestContext>()
+    .KSTAddCommon()
+    .KSTAddLogger()
+    .KSTAddSqlServiceConnectionString<UserDatabaseSqlServerConfiguration>()
 
-// Add KServerTools services
-// builder.Services.AddKServerTools();
+    // Configs
+    .AddSingleton(static impl=> {
+        var configHelper = impl.GetService<ConfigurationHelper>() ?? throw new InvalidOperationException("ConfigurationHelper service is not available.");
+        var config = configHelper.TryGet<UserDatabaseSqlServerConfiguration>() ?? throw new InvalidOperationException("UserDatabaseSqlServerConfiguration could not be retrieved.");
+        return config;
+    })
 
 var app = builder.Build();
-
-// Use KServerTools middleware
-// app.UseKServerTools();
-
 app.Run();
 ```
 
-## Documentation
-
-For detailed documentation and examples, please visit the [KServerTools Documentation](https://example.com/docs).
+Example Config
+Update the {{USER_ID}} with a real user Id
+Update the {{PASSWORD_TO_BE_SET_HERE_EXAMPLE}} with your real password
+```json
+  "UserDatabaseSqlServerConfiguration": {
+    "ConnectionStringData": "Server=tcp:localhost,1433;Initial Catalog=UserDb;Persist Security Info=False;User ID={{USER_ID}};Password={{PASSWORD_TO_BE_SET_HERE_EXAMPLE}};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;",
+    "Server": "localhost,1433",
+    "Database": "UserDb",
+    "Scopes": [
+      "https://database.windows.net/.default"
+    ]
+  }
+```
 
 ## Contributing
 
