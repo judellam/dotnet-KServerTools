@@ -14,7 +14,7 @@ KServerTools is a .NET Core package that provides common functionality for Kestr
 To install KServerTools, run the following command in your project directory:
 
 ```bash
-TODO|||| dotnet add package KServerTools
+dotnet add package KServerTools
 ```
 
 ## Usage
@@ -60,6 +60,44 @@ Update the {{PASSWORD_TO_BE_SET_HERE_EXAMPLE}} with your real password
   }
 ```
 
+### Service Principal Configuration / AKV Example ###
+
+Example on how to use the injection and create the configuration objects.
+The DefaultServicePrincipalConfiguration inherits from ServicePrincipalConfiguration and allows you to load any number of SPs. You can just use ServicePrincipalConfiguration if you only have one.
+
+When loading the SP via DI, you can specify the configuration name "ServicePrincipalConfiguration" in the line:
+    .KSTAddServicePrincipalCredentialWithConfig<DefaultServicePrincipalConfiguration>(nameof(ServicePrincipalConfiguration))
+
+Notice that the configuration uses akv://SpClientSecret. This means you need a secret resolver and an AKV.
+
+```csharp
+// The configuration object where the details will be loaded into.
+public class DefaultServicePrincipalConfiguration : ServicePrincipalConfiguration {
+}
+
+/// ...
+var builder = WebApplication.CreateBuilder(args);
+IServiceCollection services = builder.Services;
+services
+    .KSTAddSecretResolver() // neded for the akv://SpClientSecret in the configuration.
+    .KSTAddKeyVault<DefaultAzureKeyVaultConfiguration, IDefaultCredential>(nameof(AzureKeyVaultConfiguration)) // use the Default Credential
+    .KSTAddServicePrincipalCredentialWithConfig<DefaultServicePrincipalConfiguration>(nameof(ServicePrincipalConfiguration))
+    .KSTAddSqlService<UserDatabaseSqlServerConfiguration, IServicePrincipalCredential<DefaultServicePrincipalConfiguration>>()
+```
+
+Example of a configuration to get the SP secrets. The configuration name can be configured.
+```json
+  "AzureKeyVaultConfiguration": {
+    "Uri": "https://{{AKV_NAME}}.vault.azure.net/",
+    "CacheDurationInSeconds": 300
+  },
+  "ServicePrincipalConfiguration": {
+    "TenantId": "tenant-id",
+    "ApplicationId": "app-id",
+    "SecretData": "akv://SpClientSecret"
+  },
+```
+
 ## Contributing
 
 We welcome contributions! Please see our [contributing guidelines](CONTRIBUTING.md) for more information.
@@ -67,7 +105,3 @@ We welcome contributions! Please see our [contributing guidelines](CONTRIBUTING.
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
-
-## Contact
-
-For questions or support, please contact us at [support@example.com](mailto:support@example.com).
