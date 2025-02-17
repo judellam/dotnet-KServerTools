@@ -1,24 +1,23 @@
 # KServerTools
-
 KServerTools is a .NET Core package that provides common functionality for Kestrel servers. This package aims to simplify the development and maintenance of Kestrel-based applications by offering a set of reusable tools and utilities.
 
 ## Features
-
 - **Request Logging**: Easily log incoming requests and responses.
 - **Error Handling**: Centralized error handling and custom error responses.
 - **Configuration Management**: Simplified configuration setup and management.
 - **Performance Monitoring**: Tools for monitoring and improving server performance.
 
 ## Installation
-
-To install KServerTools, run the following command in your project directory:
+To install KServerTools nuget, run the following command in your project directory:
 
 ```bash
 dotnet add package KServerTools
 ```
 
-## Usage
+### Example Code repo
+[GitHub Example Repository](https://github.com/judellam/dotnet-KServerTools-example)
 
+## Usage
 Here's a basic example of how to use KServerTools in your Kestrel server:
 
 ```csharp
@@ -79,10 +78,25 @@ public class DefaultServicePrincipalConfiguration : ServicePrincipalConfiguratio
 var builder = WebApplication.CreateBuilder(args);
 IServiceCollection services = builder.Services;
 services
-    .KSTAddSecretResolver() // neded for the akv://SpClientSecret in the configuration.
+    .KSTAddSecretResolver()
     .KSTAddKeyVault<DefaultAzureKeyVaultConfiguration, IDefaultCredential>(nameof(AzureKeyVaultConfiguration)) // use the Default Credential
     .KSTAddServicePrincipalCredentialWithConfig<DefaultServicePrincipalConfiguration>(nameof(ServicePrincipalConfiguration))
     .KSTAddSqlService<UserDatabaseSqlServerConfiguration, IServicePrincipalCredential<DefaultServicePrincipalConfiguration>>()
+    .AddSingleton<UserDatabaseSqlServerConfiguration>(static impl=> {
+        var configHelper = impl.GetService<ConfigurationHelper>() ?? throw new InvalidOperationException("ConfigurationHelper service is not available.");
+        // Read from the appsettings.json
+        var config = configHelper.TryGet<UserDatabaseSqlServerConfiguration>() ?? throw new InvalidOperationException("UserDatabaseSqlServerConfiguration could not be retrieved.");
+        config.SecretResolver = GetSecretResolver<DefaultAzureKeyVaultConfiguration>(impl);
+        return config;
+    })
+
+    // ** In DI Code we need to register the AKV with the secret resolver //
+private static ISecretResolver GetSecretResolver<AKVConfig>(this IServiceProvider serviceProvider) where AKVConfig: IAzureKeyVaultConfiguration {
+    ISecretResolver secretResolver = serviceProvider.GetService<ISecretResolver>() ?? throw new InvalidOperationException("ISecretResolver service is not available.");
+    IAzureKeyVaultService<AKVConfig> akvService = serviceProvider.GetService<IAzureKeyVaultService<AKVConfig> >() ?? throw new InvalidOperationException("ISecretResolver service is not available.");
+    secretResolver.RegisterKeyVaultService(akvService);
+    return secretResolver;
+}
 ```
 
 Example of a configuration to get the SP secrets. The configuration name can be configured.
@@ -96,6 +110,20 @@ Example of a configuration to get the SP secrets. The configuration name can be 
     "ApplicationId": "app-id",
     "SecretData": "akv://SpClientSecret"
   },
+```
+
+### Azure Queue Example ###
+```csharp
+    private static IServiceCollection AddServerTools(this IServiceCollection serviceCollection) =>
+        serviceCollection
+            .KSTAddCommon() // Adds the IDefaultCredential
+            .KSTAddAzureStorageQueue<AzureStorageQueueConfig, IDefaultCredential>(nameof(AzureStorageQueueConfig));
+```
+```json
+  "AzureStorageQueueConfig" : {
+    "AccountName": "dastr",
+    "Endpoint": "queue.core.windows.net"
+  }
 ```
 
 ## Contributing

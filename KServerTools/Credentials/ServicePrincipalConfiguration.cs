@@ -16,6 +16,8 @@ public class ServicePrincipalConfiguration : IServicePrincipalConfig {
     public required string TenantId { get; set; }
     public required string SecretData { get; set; }
     public ServiceCredentalType CredentialType { get => ServiceCredentalType.ServicePrincipal; }
+
+    [Obsolete("Owning service should set")]
     public ISecretResolver? SecretResolver { get; set; }
 
     public async Task<string> GetResolvedSecret(CancellationToken cancellationToken) {

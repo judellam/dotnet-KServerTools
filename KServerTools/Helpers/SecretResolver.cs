@@ -1,22 +1,32 @@
 namespace KServerTools.Common;
 
-internal class SecretResolver(IAzureKeyVaultService keyVaultService) : ISecretResolver {
+internal class SecretResolver : ISecretResolver {
     private enum SecretType {
         KeyVault,
         Local,
     }
 
-    private readonly IAzureKeyVaultService keyVaultService = keyVaultService;
+    public SecretResolver() { 
+        Console.WriteLine("SecretResolver created.");
+    }
 
-    public async Task<string> Resolve(string secret, CancellationToken cancellationToken) {
+    private IAzureKeyVaultInternal? keyVaultService = null;
+
+    public async ValueTask<string> Resolve(string secret, CancellationToken cancellationToken) {
         var (type, value) = GetSecretType(secret);
         return type switch
         {
-            SecretType.KeyVault => await this.keyVaultService.GetSecretAsync(value, cancellationToken).ConfigureAwait(false),
+            SecretType.KeyVault => this.keyVaultService != null ? 
+                await this.keyVaultService.GetSecretAsync(value, cancellationToken).ConfigureAwait(false) : 
+                throw new InvalidOperationException("KeyVault service not registered."),
             SecretType.Local => value,
             _ => secret,
         };
     }
+
+    public void RegisterKeyVaultService(IAzureKeyVaultInternal keyVaultService) {
+        this.keyVaultService = keyVaultService;
+    } 
 
     private static (SecretType, string) GetSecretType(string secret) {
         if (Uri.TryCreate(secret, UriKind.Absolute, out var uri)) {

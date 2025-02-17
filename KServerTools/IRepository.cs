@@ -23,3 +23,12 @@ public interface IRepository<M, L> where M : IEntity where L : IEntityLookup {
     Task<bool> CreateOrUpdateAsync(M model, CancellationToken cancellationToken);
     Task<bool> DeleteAsync(L lookup, CancellationToken cancellationToken);
 }
+
+/// <summary>
+/// Additional interface for the respository to pull multiple records and extend the core IRepository interface.
+/// </summary>
+/// <typeparam name="M">The Model that function call will interact or return</typeparam>
+/// <typeparam name="L">The look up model. They can be the same, but the look up model is usually a smaller record.</typeparam>
+public interface IGetMultiple<M, L> where M : IEntity where L : IEntityLookup {
+    Task<IEnumerable<M>> GetMultipleAsync(L lookup, CancellationToken cancellationToken);
+}

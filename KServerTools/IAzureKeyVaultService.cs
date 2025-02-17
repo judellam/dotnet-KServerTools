@@ -3,11 +3,10 @@ using System.Security.Cryptography.X509Certificates;
 namespace KServerTools.Common;
 
 /// <summary>
-/// The Azure Key Value Service
+/// Interface for the Sceret Resolver
 /// </summary>
-public interface IAzureKeyVaultService {
-
-    /// <summary>
+public interface IAzureKeyVaultInternal {
+        /// <summary>
     /// Gets the Secret associated with the secretName
     /// </summary>
     /// <remarks>
@@ -22,4 +21,10 @@ public interface IAzureKeyVaultService {
     /// Requires Key Vault Certificate Officer to have the appropriate permissions to retrieve the secret.
     /// </remarks>
     Task<X509Certificate2>GetCertificate(string certificateName, CancellationToken cancellationToken);
+}
+
+/// <summary>
+/// The Azure Key Value Service
+/// </summary>
+public interface IAzureKeyVaultService<T> : IAzureKeyVaultInternal where T : IAzureKeyVaultConfiguration {
 }

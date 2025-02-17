@@ -11,9 +11,11 @@ public static class DependencyHelper {
     /// Add the configuration helper to the service collection. This helps parse the appsettions.json file.
     /// </summary>
     public static IServiceCollection KSTAddCommon(this IServiceCollection services) =>
-        services.AddSingleton<ConfigurationHelper>()
+        services
+            .AddSingleton<ConfigurationHelper>()
             .AddSingleton<DefaultCredentialConfig>()
-            .AddSingleton<IDefaultCredential, DefaultCredential<DefaultCredentialConfig>>();
+            .AddSingleton<IDefaultCredential, DefaultCredential<DefaultCredentialConfig>>()
+            .AddMemoryCache();
 
     /// <summary>
     /// Adds a generic request context.
@@ -30,17 +32,9 @@ public static class DependencyHelper {
     /// <exception cref="InvalidOperationException"></exception>
     public static IServiceCollection KSTAddServicePrincipalCredentialWithConfig<T>(this IServiceCollection services, string sectionName) where T: class, IServicePrincipalConfig {
         ArgumentNullException.ThrowIfNull(sectionName, nameof(sectionName));
-
-        services.AddSingleton<T>(impl => {
-            ConfigurationHelper configHelper = GetConfigurationHelper(impl);
-            ISecretResolver secretResolver = impl.GetService<ISecretResolver>() ?? throw new InvalidOperationException("SecretResolver service is not available.");
-            T config = configHelper.TryGet<T>(sectionName) ?? throw new InvalidOperationException($"Config section: {sectionName} for {typeof(T).Name} could not be retrieved.");
-            config.SecretResolver = secretResolver;
-            return config;
-        }).AddSingleton<IServicePrincipalCredential<T>, ServicePrincipalCredential<T>>()
-        .AddSingleton<ServicePrincipalCredential<T>>();
-
-        return services;
+        return services
+            .AddSingleton<IServicePrincipalCredential<T>, ServicePrincipalCredential<T>>()
+            .AddSingleton<ServicePrincipalCredential<T>>();
     }
 
     /// <summary>
@@ -52,11 +46,11 @@ public static class DependencyHelper {
     /// Requires the DefaultCredential service to be registered. See <see cref="ServerToolsAddDefaultCredential()"/>.
     /// </remarks>
     public static IServiceCollection KSTAddKeyVault<T, C>(this IServiceCollection services, string sectionName) where T: class, IAzureKeyVaultConfiguration where C: ITokenCredentialService =>
-        services.AddSingleton<IAzureKeyVaultConfiguration, T>(impl => {
+        services.AddSingleton<T>(impl => {
             ConfigurationHelper configHelper = impl.GetConfigurationHelper();
             var config = configHelper.TryGet<T>(sectionName) ?? throw new InvalidOperationException("AzureKeyVaultConfiguration could not be retrieved.");
             return config;
-        }).AddSingleton<IAzureKeyVaultService, AzureKeyVaultService<C>>();
+        }).AddSingleton<IAzureKeyVaultService<T>, AzureKeyVaultService<T, C>>();
     
     /// <summary>
     /// Add the configuration helper to the service collection.
@@ -100,4 +94,36 @@ public static class DependencyHelper {
 
     private static ConfigurationHelper GetConfigurationHelper(this IServiceProvider provider) =>
         provider.GetService<ConfigurationHelper>() ?? throw new InvalidOperationException("ConfigurationHelper service is not available.");
+
+    /// <summary>
+    /// Adds a Azure Storage  service to the service collection. It can be referenced like IAzureStorageService<typeparamref name="T"/>>
+    /// </summary>
+    /// <typeparam name="T">Configuration to the queue</typeparam>
+    /// <typeparam name="C">Credential to be used when accessing</typeparam>
+    /// <param name="services"></param>
+    /// <param name="sectionName">Configuration name</param>
+    public static IServiceCollection KSTAddAzureStorageService<T, C>(this IServiceCollection services, string sectionName) where T: class, IAzureStorageServiceConfig where C: class, ITokenCredentialService {
+        ArgumentNullException.ThrowIfNullOrEmpty(sectionName, nameof(sectionName));
+        return services.AddSingleton<T>(impl => {
+                ConfigurationHelper configHelper = impl.GetConfigurationHelper();
+                return configHelper.TryGet<T>(sectionName) ?? throw new InvalidOperationException("AzureStorageServiceConfig could not be retrieved.");
+            })
+            .AddSingleton<IAzureStorageService<T>, AzureStorageService<T, C>>();
+    }
+
+    /// <summary>
+    /// Adds a Azure Storage Queue service to the service collection. It can be referenced like IAzureStorageQueueService<typeparamref name="T"/>>
+    /// </summary>
+    /// <typeparam name="T">Configuration to the queue</typeparam>
+    /// <typeparam name="C">Credential to be used when accessing</typeparam>
+    /// <param name="services"></param>
+    /// <param name="sectionName">Configuration name</param>
+    public static IServiceCollection KSTAddAzureStorageQueue<T,C>(this IServiceCollection services, string sectionName) where T: class, IAzureStorageServiceConfig where C: class, ITokenCredentialService {
+        ArgumentNullException.ThrowIfNullOrEmpty(sectionName, nameof(sectionName));
+        return services.AddSingleton<T>(impl => {
+                ConfigurationHelper configHelper = impl.GetConfigurationHelper();
+                return configHelper.TryGet<T>(sectionName) ?? throw new InvalidOperationException("AzureStorageServiceConfig could not be retrieved.");
+            })
+            .AddSingleton<IAzureStorageQueueService<T>, AzureStorageQueueService<T, C>>();
+    }
 }

@@ -15,16 +15,16 @@ using System.Security.Cryptography.X509Certificates;
 /// Requires: dotnet add package Microsoft.Extensions.Caching.Memory
 /// Requires: dotnet add package Azure.Security.KeyVault.Secrets
 /// </remarks>
-internal class AzureKeyVaultService<T> : IAzureKeyVaultService where T: ITokenCredentialService {
-    private readonly IAzureKeyVaultConfiguration azureKeyVaultConfiguration;
-    private readonly T credentialResolver;
+internal class AzureKeyVaultService<T, C> : IAzureKeyVaultService<T> where T: IAzureKeyVaultConfiguration where C: ITokenCredentialService {
+    private readonly T azureKeyVaultConfiguration;
+    private readonly C credentialResolver;
     private readonly IMemoryCache memoryCache;
     private readonly IJsonLogger logger;
     private readonly Uri keyVaultUri;
     private const string SecretPrefix = "secret-";
     private const string CertificatePrefix = "certificate-";
 
-    public AzureKeyVaultService(IAzureKeyVaultConfiguration azureKeyVaultConfiguration, T credentialResolver, IMemoryCache memoryCache, IJsonLogger logger) {
+    public AzureKeyVaultService(T azureKeyVaultConfiguration, C credentialResolver, IMemoryCache memoryCache, IJsonLogger logger) {
         this.azureKeyVaultConfiguration = azureKeyVaultConfiguration;
         this.keyVaultUri = new Uri(this.azureKeyVaultConfiguration.Uri);
 

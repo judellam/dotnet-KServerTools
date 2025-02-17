@@ -23,5 +23,6 @@ public static class CanonicalSecretResolves {
 /// 2. Should be used in configuration settings where a secret is required.
 /// </remarks>
 public interface ISecretResolver {
-    Task<string> Resolve(string secret, CancellationToken cancellationToken);
+    ValueTask<string> Resolve(string secret, CancellationToken cancellationToken);
+    void RegisterKeyVaultService(IAzureKeyVaultInternal keyVaultService);
 }

@@ -3,11 +3,8 @@ namespace KServerTools.Common;
 using System.Diagnostics;
 using System.Threading.Tasks;
 
-// https://dastr.dfs.core.windows.net/
-// DefaultEndpointsProtocol=https;AccountName=dastr;EndpointSuffix=core.windows.net
-
-internal class AzureStorageService<T, C>(T config, C credential, IJsonLogger logger) : IAzureStorageService where T: IAzureStorageServiceConfig where C: ITokenCredentialService{
-    private readonly IAzureStorageService service = new AzureStorageServiceInternal<T, C>(config, credential);
+internal class AzureStorageService<T, C>(T config, C credential, IJsonLogger logger) : IAzureStorageService<T> where T: IAzureStorageServiceConfig where C: ITokenCredentialService{
+    private readonly IAzureStorageService<T> service = new AzureStorageServiceInternal<T, C>(config, credential);
     private readonly IJsonLogger logger = logger;
 
     public async Task UploadBlobAsync(string containerName, string blobName, Stream stream, CancellationToken cancellationToken) {

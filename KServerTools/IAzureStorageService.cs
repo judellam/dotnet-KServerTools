@@ -6,7 +6,7 @@ namespace KServerTools.Common;
 /// <remarks>
 /// This service is used to upload and download blobs from Azure Storage. The DFS endpoint is currently not supported.
 /// </remarks>
-public interface IAzureStorageService {
+public interface IAzureStorageService<T> where T : IAzureStorageServiceConfig {
     /// <summary>
     /// Uploads a blob to the specified container.
     /// </summary>

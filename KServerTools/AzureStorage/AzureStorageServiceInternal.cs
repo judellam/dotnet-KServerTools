@@ -6,20 +6,7 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Caching.Memory;
 
-internal class AzureStorageServiceInternal<T, C>(T config, C credential) : IAzureStorageService where T : IAzureStorageServiceConfig where C: ITokenCredentialService {
-    private readonly T config = config;
-    private readonly C credential = credential;
-    private readonly MemoryCache memoryCache = new(new MemoryCacheOptions());
-    private static readonly MemoryCacheEntryOptions memoryCacheEntryOptions = new() {
-        SlidingExpiration = TimeSpan.FromMinutes(50)
-    };
-
-    public T Config {
-        get {
-            return this.config;
-        }
-    }
-
+internal class AzureStorageServiceInternal<T, C>(T config, C credential) : AzureStorageBase<T,C>(config, credential), IAzureStorageService<T> where T : IAzureStorageServiceConfig where C: ITokenCredentialService {
     public async Task UploadBlobAsync(string containerName, string blobName, Stream stream, CancellationToken cancellationToken) {
         Verify(containerName, blobName);
 
@@ -63,7 +50,7 @@ internal class AzureStorageServiceInternal<T, C>(T config, C credential) : IAzur
 
     protected async Task<BlobContainerClient> GetContainerClient(string containerName, CancellationToken cancellationToken) {
         BlobContainerClient client;
-        string key = $"{this.Config.AccountName}:{containerName}";
+        string key = $"{this.config.AccountName}:{containerName}";
         if (!this.memoryCache.TryGetValue(key, out client!)) {
             Uri storageUri = new($"https://{config.AccountName}.{config.Endpoint}/{containerName}");
             client = new(storageUri, await this.credential.GetCredential(cancellationToken));
@@ -74,10 +61,5 @@ internal class AzureStorageServiceInternal<T, C>(T config, C credential) : IAzur
             this.memoryCache.Set(key, client, memoryCacheEntryOptions);
         }
         return client;
-    }
-
-    private static void Verify(string containerName, string blobName) {
-        ArgumentNullException.ThrowIfNullOrEmpty(containerName, nameof(containerName));
-        ArgumentNullException.ThrowIfNullOrEmpty(blobName, nameof(blobName));
     }
 }
