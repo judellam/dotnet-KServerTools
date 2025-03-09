@@ -26,7 +26,8 @@ public class ConfigurationHelper(IConfiguration configuration) {
 
             return null;
         }
-        catch {
+        catch (Exception ex) {
+            Console.WriteLine($"Error reading configuration section {sectionName}: {ex.Message}");
             return null;
         }
     }
