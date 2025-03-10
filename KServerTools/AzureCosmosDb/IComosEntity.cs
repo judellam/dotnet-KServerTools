@@ -1,6 +1,6 @@
 namespace KServerTools.Common;
 
-public interface IComosEntity: IEntity {
+public interface ICosmosEntity: IEntity {
     string Id { get; }
     string PartitionKey { get; }
 }
