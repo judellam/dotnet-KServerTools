@@ -74,10 +74,15 @@ internal class AzureCosmosDb<T, C>(T configuration, C credential) : IAzureCosmos
         CosmosClient client;
         string key = $"{databaseName}";
         if (!this.memoryCache.TryGetValue(key, out client!)) {
+            var options = new CosmosClientOptions {
+                SerializerOptions = new CosmosSerializationOptions {
+                    PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
+                }
+            };
             if (this.credential != null) {
-                client = new(this.configuration.EndpointUri, await this.credential.GetCredential(CancellationToken.None));
+                client = new(this.configuration.EndpointUri, await this.credential.GetCredential(CancellationToken.None), options);
             } else {
-                client = new(this.configuration.EndpointUri, this.configuration.PrimaryKey);
+                client = new(this.configuration.EndpointUri, this.configuration.PrimaryKey, options);
             }
             this.memoryCache.Set(key, client, memoryCacheEntryOptions);
         }
