@@ -28,7 +28,7 @@ internal class AzureCosmosDb<T, C>(T configuration, C credential) : IAzureCosmos
         return response.StatusCode == HttpStatusCode.Created;
     }
 
-    public async Task<I> GetItemAsync<I>(string database, string container, string itemId, string partitionKey, CancellationToken cancellationToken) where I : IComosEntity {
+    public async Task<I> GetItemAsync<I>(string database, string container, string itemId, string partitionKey, CancellationToken cancellationToken) where I : ICosmosEntity {
         ArgumentNullException.ThrowIfNullOrEmpty(database, nameof(database));
         ArgumentNullException.ThrowIfNullOrEmpty(container, nameof(container));
         ArgumentNullException.ThrowIfNullOrEmpty(partitionKey, nameof(partitionKey));
@@ -37,12 +37,12 @@ internal class AzureCosmosDb<T, C>(T configuration, C credential) : IAzureCosmos
         return response.Resource;
     }
 
-    public Task<IEnumerable<I>> GetItemsAsync<I>(string database, string container, string query, CancellationToken cancellationToken) where I : IComosEntity
+    public Task<IEnumerable<I>> GetItemsAsync<I>(string database, string container, string query, CancellationToken cancellationToken) where I : ICosmosEntity
     {
         throw new NotImplementedException();
     }
 
-    public async Task<I> AddItemAsync<I>(string database, string container, I item, CancellationToken cancellationToken) where I : IComosEntity {
+    public async Task<I> AddItemAsync<I>(string database, string container, I item, CancellationToken cancellationToken) where I : ICosmosEntity {
         ArgumentNullException.ThrowIfNullOrEmpty(database, nameof(database));
         ArgumentNullException.ThrowIfNullOrEmpty(container, nameof(container));
 
@@ -51,7 +51,7 @@ internal class AzureCosmosDb<T, C>(T configuration, C credential) : IAzureCosmos
         return response.Resource;
     }
 
-    public async Task<I> UpdateItemAsync<I>(string database, string container, I item, CancellationToken cancellationToken) where I : IComosEntity {
+    public async Task<I> UpdateItemAsync<I>(string database, string container, I item, CancellationToken cancellationToken) where I : ICosmosEntity {
         ArgumentNullException.ThrowIfNullOrEmpty(database, nameof(database));
         ArgumentNullException.ThrowIfNullOrEmpty(container, nameof(container));
         Container cosmosContainer = await this.GetContainer(database, container, cancellationToken).ConfigureAwait(false);
@@ -59,7 +59,7 @@ internal class AzureCosmosDb<T, C>(T configuration, C credential) : IAzureCosmos
         return response.Resource;
     }
 
-    public async Task DeleteItemAsync<I>(string database, string container, I item, CancellationToken cancellationToken) where I : IComosEntity {
+    public async Task DeleteItemAsync<I>(string database, string container, I item, CancellationToken cancellationToken) where I : ICosmosEntity {
         ArgumentNullException.ThrowIfNullOrEmpty(database, nameof(database));
         ArgumentNullException.ThrowIfNullOrEmpty(container, nameof(container));
         Container cosmosContainer = await this.GetContainer(database, container, cancellationToken).ConfigureAwait(false);
