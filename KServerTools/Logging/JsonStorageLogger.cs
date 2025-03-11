@@ -48,7 +48,7 @@ internal class JsonStorageLogger<T, C> : IJsonLogger where T : AzureStorageServi
 
     public void Warn(string message, Exception? exception = null, long? latency = null, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "") {
         string logEvent = LoggingUtilities.GetLogEvent(LogLevel.Warning, message, exception, filePath, lineNumber, memberName, accessor, requestContextAccessor, latency);
-        this.logger.LogInformation(logEvent);
+        this.logger.LogWarning(logEvent);
         this.logQueue.Enqueue(logEvent);
     }
 
