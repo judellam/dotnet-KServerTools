@@ -19,7 +19,7 @@ using Azure.Identity;
 /// </remarks>
 internal class ServicePrincipalCredential<T>(T config) : TokenCredentialBase<T>(config), IServicePrincipalCredential<T> where T: IServicePrincipalConfig {
     public override async Task<TokenCredential> GetCredential(CancellationToken cancellationToken) {
-        string secret = await this.Config.GetResolvedSecret(cancellationToken).ConfigureAwait(false);
+        string secret = await this.Config.GetSecret(cancellationToken).ConfigureAwait(false);
         return new ClientSecretCredential(
             this.Config.TenantId, 
             this.Config.ApplicationId, 

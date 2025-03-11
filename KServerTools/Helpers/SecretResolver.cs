@@ -6,10 +6,6 @@ internal class SecretResolver : ISecretResolver {
         Local,
     }
 
-    public SecretResolver() { 
-        Console.WriteLine("SecretResolver created.");
-    }
-
     private IAzureKeyVaultInternal? keyVaultService = null;
 
     public async ValueTask<string> Resolve(string secret, CancellationToken cancellationToken) {

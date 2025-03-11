@@ -111,6 +111,15 @@ public static class DependencyHelper {
             .AddSingleton<IAzureStorageService<T>, AzureStorageService<T, C>>();
     }
 
+    public static IServiceCollection KSTAddAzureCosmosDb<T, C>(this IServiceCollection services, string sectionName) where T: class, IAzureCosmosDbConfiguration where C: class, ITokenCredentialService {
+        ArgumentNullException.ThrowIfNullOrEmpty(sectionName, nameof(sectionName));
+        return services.AddSingleton<T>(impl => {
+                ConfigurationHelper configHelper = impl.GetConfigurationHelper();
+                return configHelper.TryGet<T>(sectionName) ?? throw new InvalidOperationException("AzureCosmosDbConfiguration could not be retrieved.");
+            })
+            .AddSingleton<IAzureCosmosDb<T>, AzureCosmosDb<T, C>>();
+    }
+
     /// <summary>
     /// Adds a Azure Storage Queue service to the service collection. It can be referenced like IAzureStorageQueueService<typeparamref name="T"/>>
     /// </summary>
