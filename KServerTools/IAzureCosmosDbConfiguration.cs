@@ -10,8 +10,7 @@ public class AzureCosmosDbConfiguration : IAzureCosmosDbConfiguration {
     public required string EndpointUri { get; set; }
     public string PrimaryKey { 
         get {
-            this.primaryKey = this.GetSecret(CancellationToken.None).Result;
-            return this.primaryKey;
+            return this.primaryKey ?? string.Empty;
         }
         set {
             this.primaryKey = value;
