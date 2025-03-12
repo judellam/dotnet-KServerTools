@@ -5,7 +5,7 @@ public interface ICosmosEntity: IEntity {
     string PartitionKey { get; }
 }
 
-public interface IComosEntityLookup : IEntityLookup {
+public interface ICosmosLookupEntity : IEntityLookup {
     string Id { get; }
     string PartitionKey { get; }
 }
