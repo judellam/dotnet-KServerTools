@@ -120,7 +120,8 @@ public static class DependencyHelper {
         ArgumentNullException.ThrowIfNullOrEmpty(sectionName, nameof(sectionName));
         return services
             .AddConfigSection<T>(sectionName)
-            .AddSingleton<IAzureStorageQueueService<T>, AzureStorageQueueService<T, C>>();
+            .AddSingleton<IAzureStorageQueueService<T>, AzureStorageQueueService<T, C>>()
+            .AddSingleton<IAzureQueueManagementService<T>>(sp => (IAzureQueueManagementService<T>)sp.GetRequiredService<IAzureStorageQueueService<T>>());
     }
 
     /// <summary>
