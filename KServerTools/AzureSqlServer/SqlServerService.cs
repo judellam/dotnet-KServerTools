@@ -27,11 +27,11 @@ internal class SqlServerService<T, C>(T config, IJsonLogger logger, C credential
     private readonly IJsonLogger logger = logger;
     private readonly C? credential = credential;
 
-    public Task<int> NonQueryAsync(string query, IList<SqlParameter>? parameters, CancellationToken cancellationToken) {
+    public async Task<int> NonQueryAsync(string query, IList<SqlParameter>? parameters, CancellationToken cancellationToken) {
         InternalServerErrorException.ThrowIfArgumentIsNull(query, nameof(query));
         cancellationToken.ThrowIfCancellationRequested();
 
-        return AzureServiceBaseHelpers.LoggedOperationAsync(this.logger, $"SQL NonQuery on {this.config.Database}", async () => {
+        return await AzureServiceBaseHelpers.LoggedOperationAsync(this.logger, $"SQL NonQuery on {this.config.Database}", async () => {
             using SqlConnection connection = await this.GetOrCreateConnection(cancellationToken);
             using SqlCommand command = new(query, connection);
             if (parameters is not null) {
@@ -45,11 +45,11 @@ internal class SqlServerService<T, C>(T config, IJsonLogger logger, C credential
     /// <summary>
     /// Execute a query and return a SqlDataReader. The data reader must be disposed of.
     /// </summary>
-    public Task<M> QueryAsync<M>(string query, IList<SqlParameter>? parameters, Func<SqlDataReader, Task<M>> onRead, CancellationToken cancellationToken) {
+    public async Task<M> QueryAsync<M>(string query, IList<SqlParameter>? parameters, Func<SqlDataReader, Task<M>> onRead, CancellationToken cancellationToken) {
         InternalServerErrorException.ThrowIfArgumentIsNull(query, nameof(query));
         cancellationToken.ThrowIfCancellationRequested();
 
-        return AzureServiceBaseHelpers.LoggedOperationAsync(this.logger, $"SQL Query on {this.config.Database}", async () => {
+        return await AzureServiceBaseHelpers.LoggedOperationAsync(this.logger, $"SQL Query on {this.config.Database}", async () => {
             using SqlConnection connection = await this.GetOrCreateConnection(cancellationToken);
             using SqlCommand command = new(query, connection);
             if (parameters is not null) {
