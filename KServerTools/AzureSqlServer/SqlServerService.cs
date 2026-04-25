@@ -20,9 +20,9 @@ using Microsoft.Data.SqlClient;
 ///     "Scopes": [
 ///       "https://database.windows.net/.default"
 ///     ]
-///   }
+///   }.
 /// </remarks>
-internal class SqlServerService<T, C>(T config, IJsonLogger logger, C credential) : ISqlServerService<T> where T : ISqlServerDatabaseConfiguration where C: class, ITokenCredentialService{
+internal class SqlServerService<T, C>(T config, IJsonLogger logger, C credential) : ISqlServerService<T> where T : ISqlServerDatabaseConfiguration where C : class, ITokenCredentialService {
     private readonly T config = config;
     private readonly IJsonLogger logger = logger;
     private readonly C? credential = credential;
@@ -45,6 +45,7 @@ internal class SqlServerService<T, C>(T config, IJsonLogger logger, C credential
     /// <summary>
     /// Execute a query and return a SqlDataReader. The data reader must be disposed of.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     public async Task<M> QueryAsync<M>(string query, IList<SqlParameter>? parameters, Func<SqlDataReader, Task<M>> onRead, CancellationToken cancellationToken) {
         InternalServerErrorException.ThrowIfArgumentIsNull(query, nameof(query));
         cancellationToken.ThrowIfCancellationRequested();
@@ -92,7 +93,7 @@ internal class SqlServerService<T, C>(T config, IJsonLogger logger, C credential
         // This will retry making a connection a few times to allow the server to wake up if it's the first time it's used.
         // If you're not cheap and buy a more premium skew, this retry will not be needed. -- I'm cheap. :-)
         cancellationToken.ThrowIfCancellationRequested();
-        await Retry.DoAsync(async () => 
+        await Retry.DoAsync(async () =>
             await connection.OpenAsync(cancellationToken),
             3,
             500);
@@ -104,8 +105,7 @@ internal class SqlServerService<T, C>(T config, IJsonLogger logger, C credential
 /// <summary>
 /// When only a connection string is provided.
 /// </summary>
-internal class SqlServerConnstionString<T>(T config, IJsonLogger logger) 
+internal class SqlServerConnstionString<T>(T config, IJsonLogger logger)
     : SqlServerService<T, ITokenCredentialService>(config, logger, null!)
-    where T : ISqlServerDatabaseConfiguration
-{
+    where T : ISqlServerDatabaseConfiguration {
 }

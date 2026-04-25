@@ -7,5 +7,6 @@ public interface IRequestContextAccessor {
     /// <summary>
     /// Retrieves the request context.
     /// </summary>
+    /// <returns></returns>
     public IRequestContext? GetRequestContext();
 }

@@ -5,6 +5,7 @@ using Azure.Core;
 public interface ITokenCredentialService {
     AccessToken GetToken(TokenRequestContext requestContext, CancellationToken cancellationToken);
     ValueTask<AccessToken> GetTokenAsync(TokenRequestContext requestContext, CancellationToken cancellationToken);
+
     /// <summary>
     /// Retrieves the credential.
     /// </summary>

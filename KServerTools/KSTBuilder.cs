@@ -1,6 +1,5 @@
 namespace KServerTools.Common;
 
-using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 
 /// <summary>
@@ -20,11 +19,13 @@ public class KSTBuilder {
     /// Registers common services (ConfigurationHelper, DefaultCredential, MemoryCache).
     /// Called automatically by the first Add* method if not called explicitly.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddCommon() {
         if (!this.commonRegistered) {
             this.Services.KSTAddCommon();
             this.commonRegistered = true;
         }
+
         return this;
     }
 
@@ -32,6 +33,7 @@ public class KSTBuilder {
     /// Sets the default credential type used by all subsequent Add* calls that don't specify one.
     /// Also registers common services if not already registered.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder UseCredential<C>() where C : class, ITokenCredentialService {
         this.defaultCredentialType = typeof(C);
         return this.AddCommon();
@@ -40,6 +42,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers Azure Key Vault using the default credential.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddKeyVault<T>(string sectionName) where T : class, IAzureKeyVaultConfiguration {
         this.EnsureCommon();
         Type credType = this.ResolveCredential();
@@ -54,6 +57,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers Azure Key Vault with an explicit credential type.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddKeyVault<T, C>(string sectionName) where T : class, IAzureKeyVaultConfiguration where C : ITokenCredentialService {
         this.EnsureCommon();
         this.Services.KSTAddKeyVault<T, C>(sectionName);
@@ -63,6 +67,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers Azure Blob Storage using the default credential.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddBlobStorage<T>(string sectionName) where T : class, IAzureStorageServiceConfig {
         this.EnsureCommon();
         Type credType = this.ResolveCredential();
@@ -76,6 +81,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers Azure Blob Storage with an explicit credential type.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddBlobStorage<T, C>(string sectionName) where T : class, IAzureStorageServiceConfig where C : class, ITokenCredentialService {
         this.EnsureCommon();
         this.Services.KSTAddAzureStorageService<T, C>(sectionName);
@@ -85,6 +91,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers Azure Storage Queue using the default credential.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddQueue<T>(string sectionName) where T : class, IAzureStorageServiceConfig {
         this.EnsureCommon();
         Type credType = this.ResolveCredential();
@@ -98,6 +105,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers Azure Storage Queue with an explicit credential type.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddQueue<T, C>(string sectionName) where T : class, IAzureStorageServiceConfig where C : class, ITokenCredentialService {
         this.EnsureCommon();
         this.Services.KSTAddAzureStorageQueue<T, C>(sectionName);
@@ -107,6 +115,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers Azure Cosmos DB using the default credential.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddCosmosDb<T>(string sectionName) where T : class, IAzureCosmosDbConfiguration {
         this.EnsureCommon();
         Type credType = this.ResolveCredential();
@@ -120,6 +129,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers Azure Cosmos DB with an explicit credential type.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddCosmosDb<T, C>(string sectionName) where T : class, IAzureCosmosDbConfiguration where C : class, ITokenCredentialService {
         this.EnsureCommon();
         this.Services.KSTAddAzureCosmosDb<T, C>(sectionName);
@@ -129,6 +139,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers SQL Server with token-based auth using the default credential.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddSql<T>() where T : ISqlServerDatabaseConfiguration {
         this.EnsureCommon();
         Type credType = this.ResolveCredential();
@@ -142,6 +153,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers SQL Server with token-based auth using an explicit credential type.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddSql<T, C>() where T : ISqlServerDatabaseConfiguration where C : class, ITokenCredentialService {
         this.EnsureCommon();
         this.Services.KSTAddSqlService<T, C>();
@@ -151,6 +163,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers SQL Server with connection string auth (no credential needed).
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddSqlConnectionString<T>() where T : ISqlServerDatabaseConfiguration {
         this.EnsureCommon();
         this.Services.KSTAddSqlServiceConnectionString<T>();
@@ -160,6 +173,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers the console JSON logger.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddLogger() {
         this.EnsureCommon();
         this.Services.KSTAddLogger();
@@ -169,6 +183,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers IJsonLogger backed by Microsoft.Extensions.Logging.ILogger&lt;T&gt;.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddILogger<T>() {
         this.EnsureCommon();
         this.Services.KSTAddLogger<T>();
@@ -178,6 +193,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers a storage-backed logger using the default credential.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddStorageLogger<T>(string sectionName) where T : AzureStorageServiceLogConfig {
         this.EnsureCommon();
         Type credType = this.ResolveCredential();
@@ -191,6 +207,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers a storage-backed logger with an explicit credential type.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddStorageLogger<T, C>(string sectionName) where T : AzureStorageServiceLogConfig where C : class, ITokenCredentialService {
         this.EnsureCommon();
         this.Services.KSTAddLogger<T, C>(sectionName);
@@ -200,6 +217,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers the request context with the specified type.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddRequestContext<T>() where T : class, IRequestContext, new() {
         this.EnsureCommon();
         this.Services.KSTAddRequestContext<T>();
@@ -209,6 +227,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers the secret resolver.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddSecretResolver() {
         this.EnsureCommon();
         this.Services.KSTAddSecretResolver();
@@ -218,6 +237,7 @@ public class KSTBuilder {
     /// <summary>
     /// Registers a service principal credential with configuration.
     /// </summary>
+    /// <returns></returns>
     public KSTBuilder AddServicePrincipal<T>(string sectionName) where T : class, IServicePrincipalConfig {
         this.EnsureCommon();
         this.Services.KSTAddServicePrincipalCredentialWithConfig<T>(sectionName);

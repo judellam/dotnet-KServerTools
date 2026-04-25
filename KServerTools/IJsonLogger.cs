@@ -37,7 +37,7 @@ public interface IJsonLogger {
         long? latency = null,
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0,
-        [CallerMemberName] string memberName = ""); 
+        [CallerMemberName] string memberName = "");
 
     void Error(
         string message,

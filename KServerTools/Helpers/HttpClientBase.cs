@@ -13,7 +13,7 @@ using CustomHeaders = System.Collections.Generic.IList<(string key, string value
 /// public class MyHttpClient : HttpClientBase {
 ///    public MyHttpClient(IHttpClientFactory clientFactory, IJsonLogger logger) : base(clientFactory, logger) { }
 ///    public override string GetClientName() => "MyHttpClient";
-///    public async Task<HttpResponseMessage> MyPost(string path, CustomHeaders headers, string body, CancellationToken cancellationToken) {
+///    public async Task.<HttpResponseMessage> MyPost(string path, CustomHeaders headers, string body, CancellationToken cancellationToken) {
 ///         return await this.Post(path, headers, body, cancellationToken); // Send is also available and more flexible.
 ///    }
 /// }
@@ -33,12 +33,12 @@ public abstract class HttpClientBase {
 
     public abstract string GetClientName();
 
-    protected async Task<HttpResponseMessage> Post(string path, CustomHeaders headers, string body, CancellationToken cancellationToken) => 
+    protected async Task<HttpResponseMessage> Post(string path, CustomHeaders headers, string body, CancellationToken cancellationToken) =>
         await this.Send(path, HttpMethod.Post, headers, body, cancellationToken);
 
-    protected async Task <HttpResponseMessage> Send(string path, HttpMethod httpMethod, CustomHeaders headers, string body, CancellationToken cancellationToken) {
+    protected async Task<HttpResponseMessage> Send(string path, HttpMethod httpMethod, CustomHeaders headers, string body, CancellationToken cancellationToken) {
         Stopwatch sw = Stopwatch.StartNew();
-        string statusCode = "";
+        string statusCode = string.Empty;
         bool success = false;
 
         // Create the client
@@ -46,8 +46,8 @@ public abstract class HttpClientBase {
 
         ArgumentNullException.ThrowIfNull(client, "Unable to create client");
         ArgumentNullException.ThrowIfNull(client.BaseAddress, "Client base address is null");
-        
-        UriBuilder uriBuilder = new (client.BaseAddress) {
+
+        UriBuilder uriBuilder = new(client.BaseAddress) {
             Path = path,
         };
         Uri endpoint = uriBuilder.Uri;
@@ -60,6 +60,7 @@ public abstract class HttpClientBase {
                     if (requestMessage.Headers.Contains(kvp.key)) {
                         this.logger.Warn($"Replacing request key: {kvp.key}", null);
                     }
+
                     requestMessage.Headers.Add(kvp.key, kvp.value);
                 }
             }
@@ -74,8 +75,7 @@ public abstract class HttpClientBase {
             success = message.IsSuccessStatusCode;
 
             return message;
-        }
-        finally {
+        } finally {
             sw.Stop();
             // Log path only — query strings may contain tokens or secrets
             string safePath = endpoint.GetLeftPart(UriPartial.Path);

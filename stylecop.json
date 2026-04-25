@@ -1,0 +1,24 @@
+{
+  "$schema": "https://raw.githubusercontent.com/DotNetAnalyzers/StyleCopAnalyzers/master/StyleCop.Analyzers/StyleCop.Analyzers/Settings/stylecop.schema.json",
+  "settings": {
+    "documentationRules": {
+      "companyName": "KServerTools",
+      "copyrightText": "",
+      "xmlHeader": false,
+      "documentInterfaces": true,
+      "documentExposedElements": true,
+      "documentInternalElements": true,
+      "documentPrivateElements": false,
+      "documentPrivateFields": false,
+      "fileNamingConvention": "metadata"
+    },
+    "orderingRules": {
+      "usingDirectivesPlacement": "outsideNamespace",
+      "systemUsingDirectivesFirst": true
+    },
+    "layoutRules": {
+    },
+    "readabilityRules": {
+    }
+  }
+}

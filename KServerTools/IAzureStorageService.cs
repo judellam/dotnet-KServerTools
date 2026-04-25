@@ -10,6 +10,7 @@ public interface IAzureStorageService<T> where T : IAzureStorageServiceConfig {
     /// <summary>
     /// Uploads a blob to the specified container.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     public Task UploadBlobAsync(
         string containerName,
         string blobName,
@@ -19,15 +20,17 @@ public interface IAzureStorageService<T> where T : IAzureStorageServiceConfig {
     /// <summary>
     /// Appends a blob to the specified container.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     public Task AppendAsync(
         string containerName,
         string blobName,
         Stream stream,
         CancellationToken cancellationToken);
-    
+
     /// <summary>
     /// Downloads a blob from the specified container.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     public Task<Stream> DownloadBlobAsync(
         string containerName,
         string blobName,

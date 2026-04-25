@@ -16,7 +16,7 @@ public interface IEntityLookup {
 /// Simple repository interface for CRUD operations. Overlay this interface on top of a SQL or NoSQL database
 /// for a consistent way to interact with the database - and ability to swap out the database implementation.
 /// </summary>
-/// <typeparam name="M">The Model that function call will interact or return</typeparam>
+/// <typeparam name="M">The Model that function call will interact or return.</typeparam>
 /// <typeparam name="L">The look up model. They can be the same, but the look up model is usually a smaller record.</typeparam>
 public interface IRepository<M, L> where M : class, IEntity where L : class, IEntityLookup {
     Task<M?> GetAsync(L lookup, CancellationToken cancellationToken);
@@ -27,7 +27,7 @@ public interface IRepository<M, L> where M : class, IEntity where L : class, IEn
 /// <summary>
 /// Additional interface for the respository to pull multiple records and extend the core IRepository interface.
 /// </summary>
-/// <typeparam name="M">The Model that function call will interact or return</typeparam>
+/// <typeparam name="M">The Model that function call will interact or return.</typeparam>
 /// <typeparam name="L">The look up model. They can be the same, but the look up model is usually a smaller record.</typeparam>
 public interface IGetMultiple<M, L> where M : class, IEntity where L : class, IEntityLookup {
     Task<IEnumerable<M?>> GetMultipleAsync(L lookup, CancellationToken cancellationToken);

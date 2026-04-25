@@ -2,17 +2,17 @@ namespace KServerTools.Common;
 
 public class ServiceException : Exception {
     public ServiceException(
-        ServiceError serviceError, 
+        ServiceError serviceError,
         string message) : base(message) {
         this.ServiceError = serviceError;
     }
+
     public ServiceException(
-        ServiceError serviceError, 
+        ServiceError serviceError,
         string message,
         Exception exception) : base(message, exception) {
         this.ServiceError = serviceError;
     }
-
 
     public ServiceError ServiceError { get; }
 }
@@ -35,7 +35,7 @@ public class NoResponseException : ServiceException {
 
 public class BadRequestException : ServiceException {
     public BadRequestException(string message) : base(ServiceError.BadRequest, message) { }
-    static public object ThrowIfArgumentIsNull(object? o, string argument) => o ?? throw new BadRequestException($"{argument} cannot be null");
+    public static object ThrowIfArgumentIsNull(object? o, string argument) => o ?? throw new BadRequestException($"{argument} cannot be null");
 }
 
 public class InternalServerErrorException : ServiceException {

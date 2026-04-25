@@ -7,12 +7,12 @@ using Microsoft.AspNetCore.Http;
 /// </summary>
 public interface IRequestContext {
     /// <summary>
-    /// The request id. The user can send this in, or will be generated if not present.
+    /// Gets the request id. The user can send this in, or will be generated if not present.
     /// </summary>
     public Guid RequestId { get; }
 
     /// <summary>
-    /// The user agent of the request.
+    /// Gets the user agent of the request.
     /// </summary>
     public string? UserAgent { get; }
 

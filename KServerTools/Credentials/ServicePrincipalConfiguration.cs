@@ -1,4 +1,3 @@
-
 namespace KServerTools.Common;
 
 /// <summary>
@@ -9,7 +8,7 @@ public abstract class ServicePrincipalConfiguration : IServicePrincipalConfig {
     /// Gets or sets the application ID of the service principal.
     /// </summary>
     public required string ApplicationId { get; set; }
-    
+
     /// <summary>
     /// Gets or sets the tenant ID of the service principal.
     /// </summary>
@@ -28,5 +27,6 @@ public abstract class ServicePrincipalConfiguration : IServicePrincipalConfig {
     /// <summary>
     /// Get's the secret for the service principal.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     public abstract Task<string> GetSecret(CancellationToken cancellationToken);
 }

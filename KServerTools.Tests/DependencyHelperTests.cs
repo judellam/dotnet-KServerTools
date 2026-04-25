@@ -144,7 +144,8 @@ public class DependencyHelperTests {
         var services = CreateServicesWithConfig();
         bool actionCalled = false;
 
-        services.AddKServerTools(kst => { actionCalled = true; kst.AddCommon(); });
+        services.AddKServerTools(kst => { actionCalled = true;
+            kst.AddCommon(); });
 
         Assert.True(actionCalled);
     }
@@ -152,7 +153,7 @@ public class DependencyHelperTests {
     // --- Test helper types ---
 
     private class TestKvConfig : IAzureKeyVaultConfiguration {
-        public string Uri { get; set; } = "";
+        public string Uri { get; set; } = string.Empty;
         public int CacheDurationInSeconds { get; set; }
     }
 
@@ -162,7 +163,7 @@ public class DependencyHelperTests {
         public string[] Scopes { get; } = ["https://database.windows.net/.default"];
         public string? ConnectionStringData { get; } = "Server=localhost;Database=testdb;";
         public Task<string?> GetConnectionString(CancellationToken cancellationToken) =>
-            Task.FromResult<string?>(ConnectionStringData);
+            Task.FromResult<string?>(this.ConnectionStringData);
     }
 
     private class TestRequestContext : IRequestContext {

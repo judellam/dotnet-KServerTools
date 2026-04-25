@@ -11,7 +11,7 @@ internal class DefaultCredentialConfig : ICredentialConfig {
     }
 }
 
-internal class DefaultCredential<T>(T config) : TokenCredentialBase<T>(config), IDefaultCredential where T: ICredentialConfig {
+internal class DefaultCredential<T>(T config) : TokenCredentialBase<T>(config), IDefaultCredential where T : ICredentialConfig {
     /// <summary>
     /// Retrieves the default Azure credential.
     /// </summary>

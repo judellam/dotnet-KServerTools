@@ -10,21 +10,25 @@ public interface IAzureBlobManagementService<T> where T : IAzureStorageServiceCo
     /// <summary>
     /// Deletes a blob from the specified container. Returns true if the blob was deleted, false if it did not exist.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     Task<bool> DeleteBlobAsync(string containerName, string blobName, CancellationToken cancellationToken);
 
     /// <summary>
     /// Checks whether a blob exists in the specified container.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     Task<bool> BlobExistsAsync(string containerName, string blobName, CancellationToken cancellationToken);
 
     /// <summary>
     /// Lists blob names in a container, optionally filtered by prefix. Streams results for large containers.
     /// </summary>
+    /// <returns></returns>
     IAsyncEnumerable<string> ListBlobsAsync(string containerName, string? prefix, CancellationToken cancellationToken);
 
     /// <summary>
     /// Lists all blob names in a container, optionally filtered by prefix. Materializes the full list.
     /// For large containers, prefer the streaming <see cref="ListBlobsAsync"/> overload.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     Task<IReadOnlyList<string>> ListBlobsToListAsync(string containerName, string? prefix, CancellationToken cancellationToken);
 }

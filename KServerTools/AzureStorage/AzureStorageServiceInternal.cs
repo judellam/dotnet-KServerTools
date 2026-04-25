@@ -1,12 +1,11 @@
 namespace KServerTools.Common;
 
 using System.Threading.Tasks;
-using Azure.Core;
 using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Caching.Memory;
 
-internal class AzureStorageServiceInternal<T, C>(T config, C credential, IMemoryCache memoryCache) : AzureStorageBase<T,C>(config, credential, memoryCache), IAzureStorageService<T>, IAzureBlobManagementService<T> where T : class, IAzureStorageServiceConfig where C: ITokenCredentialService {
+internal class AzureStorageServiceInternal<T, C>(T config, C credential, IMemoryCache memoryCache) : AzureStorageBase<T, C>(config, credential, memoryCache), IAzureStorageService<T>, IAzureBlobManagementService<T> where T : class, IAzureStorageServiceConfig where C : ITokenCredentialService {
     public async Task UploadBlobAsync(string containerName, string blobName, Stream stream, CancellationToken cancellationToken) {
         Verify(containerName, blobName);
 
@@ -14,7 +13,7 @@ internal class AzureStorageServiceInternal<T, C>(T config, C credential, IMemory
             .ConfigureAwait(false);
 
         BlobClient blobClient = containerClient.GetBlobClient(blobName);
-        
+
         await blobClient.UploadAsync(stream, cancellationToken)
             .ConfigureAwait(false);
     }
@@ -43,7 +42,7 @@ internal class AzureStorageServiceInternal<T, C>(T config, C credential, IMemory
         AppendBlobClient blobClient = blobContainerClient.GetAppendBlobClient(blobName);
         await blobClient.CreateIfNotExistsAsync()
             .ConfigureAwait(false);
-        
+
         await blobClient.AppendBlockAsync(stream, null, cancellationToken)
             .ConfigureAwait(false);
     }
@@ -84,16 +83,17 @@ internal class AzureStorageServiceInternal<T, C>(T config, C credential, IMemory
 
     public async Task<IReadOnlyList<string>> ListBlobsToListAsync(string containerName, string? prefix, CancellationToken cancellationToken) {
         var results = new List<string>();
-        await foreach (var name in ListBlobsAsync(containerName, prefix, cancellationToken).ConfigureAwait(false)) {
+        await foreach (var name in this.ListBlobsAsync(containerName, prefix, cancellationToken).ConfigureAwait(false)) {
             results.Add(name);
         }
+
         return results;
     }
 
     protected async Task<BlobContainerClient> GetContainerClient(string containerName, bool createIfNotExists, CancellationToken cancellationToken) {
         string key = $"blob:{this.config.AccountName}:{containerName}";
         return await this.GetOrCreateCachedAsync(key, async () => {
-            Uri storageUri = new($"https://{config.AccountName}.{config.Endpoint}/{containerName}");
+            Uri storageUri = new($"https://{this.config.AccountName}.{this.config.Endpoint}/{containerName}");
             var client = new BlobContainerClient(storageUri, await this.credential.GetCredential(cancellationToken));
 
             if (createIfNotExists) {

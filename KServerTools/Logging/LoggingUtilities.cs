@@ -31,7 +31,7 @@ internal static class LoggingUtilities {
         };
 
         return JsonSerializer.Serialize(
-            logEvent, 
+            logEvent,
             LoggingSerializationOptions);
     }
 }

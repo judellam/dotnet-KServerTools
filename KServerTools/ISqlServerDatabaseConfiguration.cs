@@ -4,12 +4,12 @@ namespace KServerTools.Common;
 /// Configuration for an Azure SQL Server database.
 /// </summary>
 /// <remarks>
-/// Required package: Microsoft.Data.SqlClient
+/// Required package: Microsoft.Data.SqlClient.
 /// </remarks>
 public interface ISqlServerDatabaseConfiguration {
     public string Server { get; }
     public string Database { get; }
     public string[] Scopes { get; } // for azure authentication
-    public string? ConnectionStringData {get;}
+    public string? ConnectionStringData { get; }
     Task<string?> GetConnectionString(CancellationToken cancellationToken);
 }

@@ -7,7 +7,7 @@ using Microsoft.Data.SqlClient;
 /// </summary>
 /// <typeparam name="T">The configuration that can resolve a secret.</typeparam>
 /// <remarks>
-/// Required package: Microsoft.Data.SqlClient
+/// Required package: Microsoft.Data.SqlClient.
 /// </remarks>
 public interface ISqlServerService<T> where T : ISqlServerDatabaseConfiguration {
     Task<int> NonQueryAsync(string query, IList<SqlParameter>? parameters, CancellationToken cancellationToken);

@@ -52,7 +52,7 @@ public class ConfigurationHelperTests {
     }
 
     private class TestAkvConfig {
-        public string Uri { get; set; } = "";
+        public string Uri { get; set; } = string.Empty;
         public int CacheDurationInSeconds { get; set; }
     }
 }

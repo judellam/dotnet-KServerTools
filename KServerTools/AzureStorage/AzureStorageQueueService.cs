@@ -1,12 +1,10 @@
 namespace KServerTools.Common;
 
-using System.Diagnostics;
 using Azure.Storage.Queues;
 using Azure.Storage.Queues.Models;
 using Microsoft.Extensions.Caching.Memory;
 
-internal class AzureStorageQueueService<T, C>(T config, C credential, IJsonLogger logger, IMemoryCache memoryCache) : AzureStorageBase<T,C>(config, credential, memoryCache, logger), IAzureStorageQueueService<T>, IAzureQueueManagementService<T> where T : class, IAzureStorageServiceConfig where C: ITokenCredentialService {
-
+internal class AzureStorageQueueService<T, C>(T config, C credential, IJsonLogger logger, IMemoryCache memoryCache) : AzureStorageBase<T, C>(config, credential, memoryCache, logger), IAzureStorageQueueService<T>, IAzureQueueManagementService<T> where T : class, IAzureStorageServiceConfig where C : ITokenCredentialService {
     public Task EnqueMessageAsync(string queueName, string message, CancellationToken cancellationToken) {
         Verify(queueName, message);
         return this.LoggedOperationAsync($"Enqueued message to queue {queueName}", async () => {
@@ -124,7 +122,7 @@ internal class AzureStorageQueueService<T, C>(T config, C credential, IJsonLogge
     protected async Task<QueueClient> GetQueueClient(string queueName, bool createIfNotExists, CancellationToken cancellationToken) {
         string key = $"queue:{this.config.AccountName}:{queueName}";
         return await this.GetOrCreateCachedAsync(key, async () => {
-            Uri storageUri = new($"https://{config.AccountName}.{config.Endpoint}");
+            Uri storageUri = new($"https://{this.config.AccountName}.{this.config.Endpoint}");
             QueueServiceClient serviceClient = new(storageUri, await this.credential.GetCredential(cancellationToken));
 
             var client = serviceClient.GetQueueClient(queueName);

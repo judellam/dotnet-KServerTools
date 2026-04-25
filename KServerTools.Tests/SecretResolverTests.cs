@@ -48,8 +48,8 @@ public class SecretResolverTests {
     [Fact]
     public async Task Resolve_EmptyString_ReturnsAsIs() {
         var resolver = new SecretResolver();
-        string result = await resolver.Resolve("", CancellationToken.None);
-        Assert.Equal("", result);
+        string result = await resolver.Resolve(string.Empty, CancellationToken.None);
+        Assert.Equal(string.Empty, result);
     }
 
     [Fact]

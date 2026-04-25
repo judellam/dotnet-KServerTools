@@ -74,7 +74,8 @@ public class AzureServiceBaseTests {
         var service = new TestService(new TestConfig(), cache, "cred1", logger.Object);
 
         bool executed = false;
-        await service.LoggedOperationAsync("write-op", () => { executed = true; return Task.CompletedTask; });
+        await service.LoggedOperationAsync("write-op", () => { executed = true;
+            return Task.CompletedTask; });
 
         Assert.True(executed);
         logger.Verify(l => l.Info("write-op", It.IsAny<long?>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
@@ -113,7 +114,8 @@ public class AzureServiceBaseTests {
         using var cache = new MemoryCache(new MemoryCacheOptions());
         var service = new TestService(new TestConfig(), cache, "cred1", logger.Object);
 
-        await service.LoggedOperationAsync("timed-op", async () => { await Task.Delay(10); return 1; });
+        await service.LoggedOperationAsync("timed-op", async () => { await Task.Delay(10);
+            return 1; });
 
         Assert.NotNull(capturedLatency);
         Assert.True(capturedLatency >= 0, $"Expected non-negative latency, got {capturedLatency}");
@@ -127,8 +129,10 @@ public class AzureServiceBaseTests {
         var service = new TestService(new TestConfig(), cache, "cred1");
 
         int factoryCalls = 0;
-        var first = await service.GetOrCreateCachedAsync("key1", () => { factoryCalls++; return Task.FromResult("value1"); });
-        var second = await service.GetOrCreateCachedAsync("key1", () => { factoryCalls++; return Task.FromResult("value2"); });
+        var first = await service.GetOrCreateCachedAsync("key1", () => { factoryCalls++;
+            return Task.FromResult("value1"); });
+        var second = await service.GetOrCreateCachedAsync("key1", () => { factoryCalls++;
+            return Task.FromResult("value2"); });
 
         Assert.Equal("value1", first);
         Assert.Equal("value1", second);
@@ -155,10 +159,12 @@ public class AzureServiceBaseTests {
 
         int callCount = 0;
         await Assert.ThrowsAsync<InvalidOperationException>(
-            () => service.GetOrCreateCachedAsync<string>("fail-key", () => { callCount++; throw new InvalidOperationException("factory failed"); }));
+            () => service.GetOrCreateCachedAsync<string>("fail-key", () => { callCount++;
+                throw new InvalidOperationException("factory failed"); }));
 
         // Second call should invoke factory again since first failed
-        var result = await service.GetOrCreateCachedAsync("fail-key", () => { callCount++; return Task.FromResult("recovered"); });
+        var result = await service.GetOrCreateCachedAsync("fail-key", () => { callCount++;
+            return Task.FromResult("recovered"); });
 
         Assert.Equal("recovered", result);
         Assert.Equal(2, callCount);
@@ -175,7 +181,8 @@ public class AzureServiceBaseTests {
         await Task.Delay(100);
 
         int callCount = 0;
-        var result = await service.GetOrCreateCachedAsync("expiring", () => { callCount++; return Task.FromResult("second"); }, shortLived);
+        var result = await service.GetOrCreateCachedAsync("expiring", () => { callCount++;
+            return Task.FromResult("second"); }, shortLived);
 
         Assert.Equal("second", result);
         Assert.Equal(1, callCount);
@@ -192,7 +199,7 @@ public class AzureServiceBaseTests {
 
     [Fact]
     public void VerifyArgs_EmptyString_ThrowsArgumentException() {
-        Assert.Throws<ArgumentException>(() => TestService.VerifyArgs(""));
+        Assert.Throws<ArgumentException>(() => TestService.VerifyArgs(string.Empty));
     }
 
     [Fact]
@@ -207,7 +214,7 @@ public class AzureServiceBaseTests {
 
     [Fact]
     public void VerifyArgs_MixedArgs_ThrowsOnFirstInvalid() {
-        Assert.Throws<ArgumentException>(() => TestService.VerifyArgs("valid", "", "also-valid"));
+        Assert.Throws<ArgumentException>(() => TestService.VerifyArgs("valid", string.Empty, "also-valid"));
     }
 
     [Fact]
@@ -226,7 +233,8 @@ public class AzureServiceBaseTests {
         cts.Cancel();
 
         await Assert.ThrowsAsync<OperationCanceledException>(
-            () => service.LoggedOperationAsync<int>("cancelled-op", () => { cts.Token.ThrowIfCancellationRequested(); return Task.FromResult(0); }, cts.Token));
+            () => service.LoggedOperationAsync<int>("cancelled-op", () => { cts.Token.ThrowIfCancellationRequested();
+                return Task.FromResult(0); }, cts.Token));
 
         logger.Verify(l => l.Warn(
             It.Is<string>(s => s.Contains("Cancelled (Caller)") && s.Contains("cancelled-op")),
@@ -246,7 +254,8 @@ public class AzureServiceBaseTests {
         cts.Cancel();
 
         await Assert.ThrowsAsync<OperationCanceledException>(
-            () => service.LoggedOperationAsync("void-cancel", () => { cts.Token.ThrowIfCancellationRequested(); return Task.CompletedTask; }, cts.Token));
+            () => service.LoggedOperationAsync("void-cancel", () => { cts.Token.ThrowIfCancellationRequested();
+                return Task.CompletedTask; }, cts.Token));
 
         logger.Verify(l => l.Warn(
             It.Is<string>(s => s.Contains("Cancelled (Caller)")),
@@ -265,7 +274,8 @@ public class AzureServiceBaseTests {
         serverCts.Cancel();
 
         await Assert.ThrowsAsync<OperationCanceledException>(
-            () => service.LoggedOperationAsync<int>("server-cancel", () => { serverCts.Token.ThrowIfCancellationRequested(); return Task.FromResult(0); }, callerCts.Token));
+            () => service.LoggedOperationAsync<int>("server-cancel", () => { serverCts.Token.ThrowIfCancellationRequested();
+                return Task.FromResult(0); }, callerCts.Token));
 
         logger.Verify(l => l.Warn(
             It.Is<string>(s => s.Contains("Cancelled (Server)")),

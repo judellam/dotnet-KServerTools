@@ -1,9 +1,9 @@
 namespace KServerTools.Common;
 
-using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Logging.Console;
 using System.Text;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Logging.Console;
 
 /// <summary>
 /// Custom console formatter for logging.
@@ -11,7 +11,7 @@ using System.Text;
 /// <remarks>
 /// This class is used to create a custom console formatter for logging.
 /// Requires: Microsoft.Extensions.Logging.Abstractions
-/// Requires: Microsoft.Extensions.Logging.Console
+/// Requires: Microsoft.Extensions.Logging.Console.
 /// </remarks>
 public class CustomConsoleFormatter : ConsoleFormatter {
     public const string FormatterName = "CustomFormatter";

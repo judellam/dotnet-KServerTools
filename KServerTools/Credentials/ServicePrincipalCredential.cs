@@ -6,7 +6,7 @@ using Azure.Identity;
 /// <summary>
 /// Gets a service principal credential.
 /// </summary>
-/// <typeparam name="T">The type of config</typeparam>
+/// <typeparam name="T">The type of config.</typeparam>
 /// <param name="config">The config that contains information about the credential.</param>
 /// <remarks>
 /// Example configuration:
@@ -15,14 +15,14 @@ using Azure.Identity;
 ///    "TenantId": "{{guid}}",
 ///    "ApplicationId": "{{guid}}",
 ///    "SecretData": "akv://SpClientSecret"
-///  },
+///  }.
 /// </remarks>
-internal class ServicePrincipalCredential<T>(T config) : TokenCredentialBase<T>(config), IServicePrincipalCredential<T> where T: IServicePrincipalConfig {
+internal class ServicePrincipalCredential<T>(T config) : TokenCredentialBase<T>(config), IServicePrincipalCredential<T> where T : IServicePrincipalConfig {
     public override async Task<TokenCredential> GetCredential(CancellationToken cancellationToken) {
         string secret = await this.Config.GetSecret(cancellationToken).ConfigureAwait(false);
         return new ClientSecretCredential(
-            this.Config.TenantId, 
-            this.Config.ApplicationId, 
+            this.Config.TenantId,
+            this.Config.ApplicationId,
             secret);
     }
 

@@ -8,7 +8,7 @@ public interface IAzureCosmosDbConfiguration {
 public class AzureCosmosDbConfiguration : IAzureCosmosDbConfiguration {
     private string? primaryKey;
     public required string EndpointUri { get; set; }
-    public string PrimaryKey { 
+    public string PrimaryKey {
         get {
             return this.primaryKey ?? string.Empty;
         }
@@ -16,6 +16,7 @@ public class AzureCosmosDbConfiguration : IAzureCosmosDbConfiguration {
             this.primaryKey = value;
         }
     }
+
     public virtual Task<string> GetSecret(CancellationToken cancellationToken) {
         return Task.FromResult(this.primaryKey ?? string.Empty);
     }

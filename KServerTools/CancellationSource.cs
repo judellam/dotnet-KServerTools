@@ -6,8 +6,10 @@ namespace KServerTools.Common;
 public enum CancellationSource {
     /// <summary>The caller cancelled the request (e.g., client disconnect, HttpContext.RequestAborted).</summary>
     Caller,
+
     /// <summary>The server cancelled the request (e.g., internal timeout, app shutdown).</summary>
     Server,
+
     /// <summary>No token context available to determine the source.</summary>
     Unknown
 }

@@ -2,7 +2,7 @@ namespace KServerTools.Common;
 
 using System.Threading.Tasks;
 
-internal class AzureStorageService<T, C>(T config, C credential, IJsonLogger logger, Microsoft.Extensions.Caching.Memory.IMemoryCache memoryCache) : IAzureStorageService<T>, IAzureBlobManagementService<T> where T: class, IAzureStorageServiceConfig where C: ITokenCredentialService{
+internal class AzureStorageService<T, C>(T config, C credential, IJsonLogger logger, Microsoft.Extensions.Caching.Memory.IMemoryCache memoryCache) : IAzureStorageService<T>, IAzureBlobManagementService<T> where T : class, IAzureStorageServiceConfig where C : ITokenCredentialService {
     private readonly AzureStorageServiceInternal<T, C> service = new(config, credential, memoryCache);
     private readonly IJsonLogger logger = logger;
 

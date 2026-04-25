@@ -1,0 +1,344 @@
+# EditorConfig: https://editorconfig.org
+root = true
+
+###############################################################################
+# All files
+###############################################################################
+[*]
+indent_style = space
+indent_size = 4
+end_of_line = lf
+charset = utf-8
+trim_trailing_whitespace = true
+insert_final_newline = true
+
+###############################################################################
+# XML / project files
+###############################################################################
+[*.{xml,csproj,props,targets,config,nuspec}]
+indent_size = 2
+
+###############################################################################
+# JSON
+###############################################################################
+[*.json]
+indent_size = 2
+
+###############################################################################
+# Markdown
+###############################################################################
+[*.md]
+trim_trailing_whitespace = false
+
+###############################################################################
+# C# files
+###############################################################################
+[*.cs]
+
+# --- Language conventions ---------------------------------------------------
+
+# Prefer file-scoped namespaces
+csharp_style_namespace_declarations = file_scoped:warning
+
+# Prefer braces (readability / bug prevention)
+csharp_prefer_braces = true:warning
+
+# Prefer simple using statement
+csharp_prefer_simple_using_statement = true:suggestion
+
+# Prefer pattern matching
+csharp_style_prefer_pattern_matching = true:suggestion
+csharp_style_prefer_not_pattern = true:suggestion
+csharp_style_prefer_switch_expression = true:suggestion
+
+# Prefer expression-bodied members for simple accessors
+csharp_style_expression_bodied_accessors = true:suggestion
+csharp_style_expression_bodied_properties = true:suggestion
+
+# var preferences — prefer explicit types for clarity
+csharp_style_var_for_built_in_types = false:suggestion
+csharp_style_var_when_type_is_apparent = true:suggestion
+csharp_style_var_elsewhere = false:suggestion
+
+# --- Formatting -------------------------------------------------------------
+
+# Newline preferences — BSL (brace on same line / K&R) style
+csharp_new_line_before_open_brace = none
+csharp_new_line_before_else = false
+csharp_new_line_before_catch = false
+csharp_new_line_before_finally = false
+csharp_new_line_before_members_in_object_initializers = true
+csharp_new_line_before_members_in_anonymous_types = true
+csharp_new_line_between_query_expression_clauses = true
+
+# Indentation
+csharp_indent_case_contents = true
+csharp_indent_switch_labels = true
+
+# Spacing
+csharp_space_after_cast = false
+csharp_space_after_keywords_in_control_flow_statements = true
+csharp_space_between_method_call_parameter_list_parentheses = false
+csharp_space_between_method_declaration_parameter_list_parentheses = false
+csharp_space_between_parentheses = false
+
+# Wrapping
+csharp_preserve_single_line_blocks = true
+csharp_preserve_single_line_statements = false
+
+# --- Naming conventions -----------------------------------------------------
+
+# PascalCase for public/internal/protected members
+dotnet_naming_rule.public_members_pascal.symbols = public_symbols
+dotnet_naming_rule.public_members_pascal.style = pascal_case_style
+dotnet_naming_rule.public_members_pascal.severity = warning
+
+dotnet_naming_symbols.public_symbols.applicable_kinds = namespace, class, struct, interface, enum, property, method, field, event, delegate, type_parameter
+dotnet_naming_symbols.public_symbols.applicable_accessibilities = public, internal, protected, protected_internal
+
+dotnet_naming_style.pascal_case_style.capitalization = pascal_case
+
+# Interfaces must start with I
+dotnet_naming_rule.interfaces_begin_with_i.symbols = interface_symbols
+dotnet_naming_rule.interfaces_begin_with_i.style = interface_style
+dotnet_naming_rule.interfaces_begin_with_i.severity = warning
+
+dotnet_naming_symbols.interface_symbols.applicable_kinds = interface
+dotnet_naming_symbols.interface_symbols.applicable_accessibilities = *
+
+dotnet_naming_style.interface_style.required_prefix = I
+dotnet_naming_style.interface_style.capitalization = pascal_case
+
+# Type parameters must start with T
+dotnet_naming_rule.type_params_begin_with_t.symbols = type_param_symbols
+dotnet_naming_rule.type_params_begin_with_t.style = type_param_style
+dotnet_naming_rule.type_params_begin_with_t.severity = warning
+
+dotnet_naming_symbols.type_param_symbols.applicable_kinds = type_parameter
+dotnet_naming_symbols.type_param_symbols.applicable_accessibilities = *
+
+dotnet_naming_style.type_param_style.required_prefix = T
+dotnet_naming_style.type_param_style.capitalization = pascal_case
+
+# camelCase for private/private_protected fields
+dotnet_naming_rule.private_fields_camel.symbols = private_field_symbols
+dotnet_naming_rule.private_fields_camel.style = camel_case_style
+dotnet_naming_rule.private_fields_camel.severity = warning
+
+dotnet_naming_symbols.private_field_symbols.applicable_kinds = field
+dotnet_naming_symbols.private_field_symbols.applicable_accessibilities = private, private_protected
+
+dotnet_naming_style.camel_case_style.capitalization = camel_case
+
+# camelCase for parameters and locals
+dotnet_naming_rule.locals_camel.symbols = local_symbols
+dotnet_naming_rule.locals_camel.style = camel_case_style
+dotnet_naming_rule.locals_camel.severity = warning
+
+dotnet_naming_symbols.local_symbols.applicable_kinds = parameter, local
+dotnet_naming_symbols.local_symbols.applicable_accessibilities = *
+
+# Async methods should end with Async
+dotnet_naming_rule.async_methods_end_with_async.symbols = async_method_symbols
+dotnet_naming_rule.async_methods_end_with_async.style = async_method_style
+dotnet_naming_rule.async_methods_end_with_async.severity = suggestion
+
+dotnet_naming_symbols.async_method_symbols.applicable_kinds = method
+dotnet_naming_symbols.async_method_symbols.required_modifiers = async
+
+dotnet_naming_style.async_method_style.required_suffix = Async
+dotnet_naming_style.async_method_style.capitalization = pascal_case
+
+# --- Roslyn Analyzers -------------------------------------------------------
+
+# IDE0005: Remove unnecessary using directives
+dotnet_diagnostic.IDE0005.severity = warning
+
+# IDE0011: Add braces
+dotnet_diagnostic.IDE0011.severity = warning
+
+# IDE0055: Fix formatting
+dotnet_diagnostic.IDE0055.severity = warning
+
+# IDE0161: Use file-scoped namespace
+dotnet_diagnostic.IDE0161.severity = warning
+
+# --- StyleCop: Documentation ------------------------------------------------
+
+# SA1600: Elements should be documented
+dotnet_diagnostic.SA1600.severity = warning
+
+# SA1601: Partial elements should be documented
+dotnet_diagnostic.SA1601.severity = warning
+
+# SA1602: Enumeration items should be documented
+dotnet_diagnostic.SA1602.severity = warning
+
+# SA1611: Element parameters should be documented
+dotnet_diagnostic.SA1611.severity = warning
+
+# SA1615: Element return value should be documented
+dotnet_diagnostic.SA1615.severity = warning
+
+# SA1618: Generic type parameters should be documented
+dotnet_diagnostic.SA1618.severity = warning
+
+# SA1633: File must have header — DISABLED (not using file headers)
+dotnet_diagnostic.SA1633.severity = none
+
+# SA1634-SA1641: File header content rules — DISABLED
+dotnet_diagnostic.SA1634.severity = none
+dotnet_diagnostic.SA1635.severity = none
+dotnet_diagnostic.SA1636.severity = none
+dotnet_diagnostic.SA1637.severity = none
+dotnet_diagnostic.SA1638.severity = none
+dotnet_diagnostic.SA1639.severity = none
+dotnet_diagnostic.SA1640.severity = none
+dotnet_diagnostic.SA1641.severity = none
+
+# --- StyleCop: Ordering -----------------------------------------------------
+
+# SA1200: Using directives must be placed correctly
+dotnet_diagnostic.SA1200.severity = none
+
+# SA1201: Elements should appear in the correct order (fields, constructors, properties, methods...)
+dotnet_diagnostic.SA1201.severity = warning
+
+# SA1202: Elements should be ordered by access — DISABLED
+# (conflicts with "private fields first" convention; SA1201 handles kind ordering)
+dotnet_diagnostic.SA1202.severity = none
+
+# SA1208: System using directives should be placed before other using directives
+dotnet_diagnostic.SA1208.severity = warning
+
+# --- StyleCop: Layout -------------------------------------------------------
+
+# SA1500: Braces for multi-line statements should not share line — DISABLED
+# (codebase uses BSL / K&R brace style: opening brace on same line)
+dotnet_diagnostic.SA1500.severity = none
+
+# SA1502: Element should not be on a single line — DISABLED
+# (allow single-line property accessors, simple methods)
+dotnet_diagnostic.SA1502.severity = none
+
+# SA1503: Braces should not be omitted
+dotnet_diagnostic.SA1503.severity = warning
+
+# SA1507: Code should not contain multiple blank lines in a row
+dotnet_diagnostic.SA1507.severity = warning
+
+# SA1508: Closing braces should not be preceded by blank line
+dotnet_diagnostic.SA1508.severity = warning
+
+# SA1509: Opening braces should not be preceded by blank line
+dotnet_diagnostic.SA1509.severity = warning
+
+# SA1512: Single-line comments should not be followed by blank line — DISABLED
+dotnet_diagnostic.SA1512.severity = none
+
+# SA1513: Closing brace should be followed by blank line
+dotnet_diagnostic.SA1513.severity = warning
+
+# SA1515: Single-line comment should be preceded by blank line — DISABLED
+dotnet_diagnostic.SA1515.severity = none
+
+# SA1516: Elements should be separated by blank line
+dotnet_diagnostic.SA1516.severity = suggestion
+
+# SA1518: Use line endings correctly at end of file
+dotnet_diagnostic.SA1518.severity = suggestion
+
+# --- StyleCop: Spacing ------------------------------------------------------
+
+# SA1000: Keywords should be spaced correctly
+dotnet_diagnostic.SA1000.severity = warning
+
+# SA1001: Commas should be spaced correctly
+dotnet_diagnostic.SA1001.severity = warning
+
+# SA1003: Symbols should be spaced correctly
+dotnet_diagnostic.SA1003.severity = warning
+
+# SA1005: Single-line comments should begin with single space
+dotnet_diagnostic.SA1005.severity = warning
+
+# SA1009: Closing parenthesis should be spaced correctly — DISABLED
+# (conflicts with BSL multi-line parameter style)
+dotnet_diagnostic.SA1009.severity = none
+
+# SA1024: Colon should be spaced correctly — DISABLED
+# (noisy with primary constructor syntax)
+dotnet_diagnostic.SA1024.severity = none
+
+# SA1028: Code should not contain trailing whitespace
+dotnet_diagnostic.SA1028.severity = warning
+
+# --- StyleCop: Readability --------------------------------------------------
+
+# SA1101: Prefix local calls with this — keep enabled (codebase convention)
+dotnet_diagnostic.SA1101.severity = warning
+
+# SA1107: Code should not contain multiple statements on one line
+dotnet_diagnostic.SA1107.severity = warning
+
+# SA1108: Block statements should not contain embedded comments
+dotnet_diagnostic.SA1108.severity = suggestion
+
+# SA1111: Closing paren on same line as last param — DISABLED
+dotnet_diagnostic.SA1111.severity = none
+
+# SA1116: Split parameters should start on line after declaration — DISABLED
+dotnet_diagnostic.SA1116.severity = none
+
+# SA1117: Parameters should be on same line or each on own line — DISABLED
+dotnet_diagnostic.SA1117.severity = none
+
+# SA1122: Use string.Empty for empty strings
+dotnet_diagnostic.SA1122.severity = warning
+
+# SA1127: Generic type constraints should be on their own line — DISABLED
+# (conflicts with BSL compact style)
+dotnet_diagnostic.SA1127.severity = none
+
+# SA1128: Put constructor initializers on their own line
+dotnet_diagnostic.SA1128.severity = suggestion
+
+# SA1129: Do not use default value type constructor
+dotnet_diagnostic.SA1129.severity = warning
+
+# --- StyleCop: Maintainability ----------------------------------------------
+
+# SA1402: File may only contain a single type
+dotnet_diagnostic.SA1402.severity = warning
+
+# SA1404: Code analysis suppression should have justification
+dotnet_diagnostic.SA1404.severity = warning
+
+# SA1413: Use trailing comma in multi-line initializers
+dotnet_diagnostic.SA1413.severity = none
+
+# --- StyleCop: Naming -------------------------------------------------------
+
+# SA1300: Element should begin with upper-case letter
+dotnet_diagnostic.SA1300.severity = warning
+
+# SA1302: Interface names should begin with I
+dotnet_diagnostic.SA1302.severity = warning
+
+# SA1309: Field names should not begin with underscore
+# (keeping enabled — codebase uses camelCase without underscore prefix)
+dotnet_diagnostic.SA1309.severity = warning
+
+# SA1311: Static readonly fields should begin with upper-case letter
+dotnet_diagnostic.SA1311.severity = warning
+
+# SA1313: Parameter names should begin with lower-case letter
+dotnet_diagnostic.SA1313.severity = warning
+
+# SA1314: Type parameter names should begin with T — DISABLED
+# (existing public API uses single-letter params like C; renaming is breaking)
+dotnet_diagnostic.SA1314.severity = none
+
+# SA1316: Tuple element names should use correct casing — DISABLED
+# (noisy, low-impact)
+dotnet_diagnostic.SA1316.severity = none

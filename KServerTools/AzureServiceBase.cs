@@ -22,6 +22,7 @@ internal abstract class AzureServiceBase<TConfig>(TConfig config, IMemoryCache m
     /// Logs success on completion, logs error and rethrows on failure.
     /// Cancellations are logged as warnings with source attribution (caller vs server).
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     protected async Task<T> LoggedOperationAsync<T>(string operationName, Func<Task<T>> operation, CancellationToken cancellationToken = default) {
         Stopwatch stopwatch = Stopwatch.StartNew();
         try {
@@ -44,6 +45,7 @@ internal abstract class AzureServiceBase<TConfig>(TConfig config, IMemoryCache m
     /// <summary>
     /// Executes an async void operation with Stopwatch-based latency logging.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     protected async Task LoggedOperationAsync(string operationName, Func<Task> operation, CancellationToken cancellationToken = default) {
         Stopwatch stopwatch = Stopwatch.StartNew();
         try {
@@ -66,6 +68,7 @@ internal abstract class AzureServiceBase<TConfig>(TConfig config, IMemoryCache m
     /// Gets or creates a cached value. Cache keys are automatically prefixed with the credential
     /// identity to isolate cached clients/data across different credential contexts in multi-tenant scenarios.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     protected async Task<T> GetOrCreateCachedAsync<T>(string cacheKey, Func<Task<T>> factory, MemoryCacheEntryOptions? options = null) where T : notnull {
         string scopedKey = $"{this.credentialId}:{cacheKey}";
         if (this.memoryCache.TryGetValue(scopedKey, out T? cached) && cached is not null) {
@@ -89,13 +92,16 @@ internal abstract class AzureServiceBase<TConfig>(TConfig config, IMemoryCache m
     /// Determines whether a cancellation was initiated by the caller (e.g., client disconnect,
     /// HttpContext.RequestAborted) or by the server (e.g., internal timeout, shutdown).
     /// </summary>
+    /// <returns></returns>
     internal static CancellationSource GetCancellationSource(OperationCanceledException ex, CancellationToken callerToken) {
         if (callerToken.IsCancellationRequested) {
             return CancellationSource.Caller;
         }
+
         if (ex.CancellationToken != CancellationToken.None && ex.CancellationToken.IsCancellationRequested) {
             return CancellationSource.Server;
         }
+
         return CancellationSource.Unknown;
     }
 }

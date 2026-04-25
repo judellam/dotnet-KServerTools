@@ -203,7 +203,7 @@ public class KSTBuilderTests {
         );
 
         // ConfigurationHelper should be registered only once
-        Assert.Single(services.Where(sd => sd.ServiceType == typeof(ConfigurationHelper)));
+        Assert.Single(services, sd => sd.ServiceType == typeof(ConfigurationHelper));
     }
 
     [Fact]
@@ -243,7 +243,7 @@ public class KSTBuilderTests {
 
     private class TestCosmosConfig : IAzureCosmosDbConfiguration {
         public string EndpointUri { get; set; } = "https://test.documents.azure.com:443/";
-        public string PrimaryKey { get; set; } = "";
+        public string PrimaryKey { get; set; } = string.Empty;
     }
 
     private class TestSqlConfig : ISqlServerDatabaseConfiguration {
@@ -252,6 +252,6 @@ public class KSTBuilderTests {
         public string[] Scopes { get; } = ["https://database.windows.net/.default"];
         public string? ConnectionStringData { get; } = "Server=localhost;Database=testdb;";
         public Task<string?> GetConnectionString(CancellationToken cancellationToken) =>
-            Task.FromResult<string?>(ConnectionStringData);
+            Task.FromResult<string?>(this.ConnectionStringData);
     }
 }

@@ -3,9 +3,9 @@ namespace KServerTools.Common;
 using System.Text.Json.Serialization;
 
 public record Message(
-    [property:JsonPropertyName("body")] string Body, 
-    [property:JsonPropertyName("messageId")] string MessageId, 
-    [property:JsonPropertyName("popReceipt")] string PopReceipt);
+    [property: JsonPropertyName("body")] string Body,
+    [property: JsonPropertyName("messageId")] string MessageId,
+    [property: JsonPropertyName("popReceipt")] string PopReceipt);
 
 public interface IAzureStorageQueueService<T> where T : IAzureStorageServiceConfig {
     Task EnqueMessageAsync(string queueName, string message, CancellationToken cancellationToken);

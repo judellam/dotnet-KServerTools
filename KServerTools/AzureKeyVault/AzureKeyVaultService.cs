@@ -1,15 +1,15 @@
 namespace KServerTools.Common;
 
+using System.Security.Cryptography.X509Certificates;
 using Azure.Core;
 using Azure.Security.KeyVault.Certificates;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Caching.Memory;
-using System.Security.Cryptography.X509Certificates;
 
 /// <summary>
-/// The Azure Key Vault Service
+/// The Azure Key Vault Service.
 /// </summary>
-internal class AzureKeyVaultService<T, C> : AzureServiceBase<T>, IAzureKeyVaultService<T> where T: class, IAzureKeyVaultConfiguration where C: ITokenCredentialService {
+internal class AzureKeyVaultService<T, C> : AzureServiceBase<T>, IAzureKeyVaultService<T> where T : class, IAzureKeyVaultConfiguration where C : ITokenCredentialService {
     private readonly C credentialResolver;
     private readonly Uri keyVaultUri;
     private const string SecretPrefix = "secret-";

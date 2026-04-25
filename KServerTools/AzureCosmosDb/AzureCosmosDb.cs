@@ -43,7 +43,7 @@ internal class AzureCosmosDb<T, C>(T configuration, C credential, IMemoryCache m
         ArgumentNullException.ThrowIfNullOrEmpty(container, nameof(container));
         ArgumentNullException.ThrowIfNullOrEmpty(query, nameof(query));
 
-        return await GetItemsAsync<I>(database, container, new QueryDefinition(query), cancellationToken);
+        return await this.GetItemsAsync<I>(database, container, new QueryDefinition(query), cancellationToken);
     }
 
     public async Task<IEnumerable<I>> GetItemsAsync<I>(string database, string container, QueryDefinition queryDefinition, CancellationToken cancellationToken, QueryRequestOptions? requestOptions = null) where I : ICosmosEntity {
@@ -59,6 +59,7 @@ internal class AzureCosmosDb<T, C>(T configuration, C credential, IMemoryCache m
                 FeedResponse<I> response = await iterator.ReadNextAsync(cancellationToken).ConfigureAwait(false);
                 results.AddRange(response);
             }
+
             return (IEnumerable<I>)results;
         }, cancellationToken);
     }
@@ -103,7 +104,9 @@ internal class AzureCosmosDb<T, C>(T configuration, C credential, IMemoryCache m
     private CosmosClient? cosmosClient;
 
     private async ValueTask<CosmosClient> GetClient() {
-        if (this.cosmosClient != null) return this.cosmosClient;
+        if (this.cosmosClient != null) {
+            return this.cosmosClient;
+        }
 
         var options = new CosmosClientOptions {
             SerializerOptions = new CosmosSerializationOptions {
@@ -116,6 +119,7 @@ internal class AzureCosmosDb<T, C>(T configuration, C credential, IMemoryCache m
         } else {
             client = new CosmosClient(this.config.EndpointUri, this.config.PrimaryKey, options);
         }
+
         this.cosmosClient = client;
         return client;
     }

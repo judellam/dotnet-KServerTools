@@ -8,7 +8,7 @@ namespace KServerTools.Common;
 ///   "AzureKeyVaultConfiguration": {
 ///     "Uri": "https://{{akvname}}.vault.azure.net/",
 ///     "CacheDurationInSeconds": 300
-///   },
+///   }.
 /// </remarks>
 public interface IAzureKeyVaultConfiguration {
     string Uri { get; set; }

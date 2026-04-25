@@ -12,7 +12,7 @@ public static class CanonicalSecretResolves {
     /// The secret resolver will be given an instance of <see cref="IAzureKeyVaultService"/> to resolve the secret.
     /// The assumption is it's in the format of "akv://{secretName}" and you have one AKV service to resolve all secrets.
     /// </remarks>
-    public const string AzureKeyVaultConfiguration = "akv"; 
+    public const string AzureKeyVaultConfiguration = "akv";
 }
 
 /// <summary>

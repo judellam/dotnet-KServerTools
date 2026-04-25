@@ -9,7 +9,6 @@ using Microsoft.Extensions.Logging;
 /// KServerTools' structured JSON logging format.
 /// </summary>
 internal class ILoggerAdapter<T>(ILogger<T> logger, IRequestContextAccessor? requestContextAccessor = null, Microsoft.AspNetCore.Http.IHttpContextAccessor? httpContextAccessor = null) : IJsonLogger {
-
     public void Info(string message, long? latency = null, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "") {
         if (logger.IsEnabled(LogLevel.Information)) {
             logger.LogInformation("{Message} | {MemberName} ({FilePath}:{LineNumber}) | Latency={Latency}ms",

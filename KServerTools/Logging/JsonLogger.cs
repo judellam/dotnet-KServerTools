@@ -1,8 +1,8 @@
 namespace KServerTools.Common;
 
 using System.Runtime.CompilerServices;
-using Microsoft.Extensions.Logging;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Logging;
 
 // Future work:
 // 1. Add support for additional loggers to be passed in to build a chain (ie: can we log to disk, azure storage, etc).
@@ -19,7 +19,7 @@ internal class JsonLogger(IHttpContextAccessor accessor, ILogger<JsonLogger> log
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0,
         [CallerMemberName] string memberName = "") {
-        string logEvent = LoggingUtilities.GetLogEvent(LogLevel.Error, message, exception, filePath, lineNumber, memberName, accessor, requestContextAccessor, latency);
+        string logEvent = LoggingUtilities.GetLogEvent(LogLevel.Error, message, exception, filePath, lineNumber, memberName, this.accessor, this.requestContextAccessor, latency);
         this.logger.LogError(logEvent);
     }
 
@@ -30,7 +30,7 @@ internal class JsonLogger(IHttpContextAccessor accessor, ILogger<JsonLogger> log
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0,
         [CallerMemberName] string memberName = "") {
-        string logEvent = LoggingUtilities.GetLogEvent(LogLevel.Warning, message, exception, filePath, lineNumber, memberName, accessor, requestContextAccessor, latency);
+        string logEvent = LoggingUtilities.GetLogEvent(LogLevel.Warning, message, exception, filePath, lineNumber, memberName, this.accessor, this.requestContextAccessor, latency);
         this.logger.LogWarning(logEvent);
     }
 
@@ -40,21 +40,21 @@ internal class JsonLogger(IHttpContextAccessor accessor, ILogger<JsonLogger> log
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0,
         [CallerMemberName] string memberName = "") {
-        string logEvent = LoggingUtilities.GetLogEvent(LogLevel.Information, message, null, filePath, lineNumber, memberName, accessor, requestContextAccessor, latency);
+        string logEvent = LoggingUtilities.GetLogEvent(LogLevel.Information, message, null, filePath, lineNumber, memberName, this.accessor, this.requestContextAccessor, latency);
         this.logger.LogInformation(logEvent);
     }
 
     public void IfInfo(
         bool condition,
         string message,
-        long? latency = null, 
+        long? latency = null,
         [CallerFilePath] string filePath = "",
         [CallerLineNumber] int lineNumber = 0,
         [CallerMemberName] string memberName = "") {
         if (condition) {
             this.Info(message, latency, filePath, lineNumber, memberName);
         }
-    }    
+    }
 
     public void IfError(
         bool condition,

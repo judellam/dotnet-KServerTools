@@ -19,7 +19,10 @@ public class RetryTests {
         int callCount = 0;
         await Retry.DoAsync(async () => {
             callCount++;
-            if (callCount < 3) throw new InvalidOperationException("fail");
+            if (callCount < 3) {
+                throw new InvalidOperationException("fail");
+            }
+
             await Task.CompletedTask;
         }, maxRetries: 3, delay: 10);
 
@@ -70,7 +73,10 @@ public class RetryTests {
         int callCount = 0;
         var result = await Retry.DoAsync(async () => {
             callCount++;
-            if (callCount < 2) throw new InvalidOperationException("fail");
+            if (callCount < 2) {
+                throw new InvalidOperationException("fail");
+            }
+
             await Task.CompletedTask;
             return "success";
         }, maxRetries: 3, delay: 10);
@@ -111,7 +117,10 @@ public class RetryTests {
         int callCount = 0;
         await Retry.DoAsync(async () => {
             callCount++;
-            if (callCount < 3) throw new TimeoutException("transient");
+            if (callCount < 3) {
+                throw new TimeoutException("transient");
+            }
+
             await Task.CompletedTask;
         }, maxRetries: 3, delay: 10, shouldRetry: ex => ex is TimeoutException);
 

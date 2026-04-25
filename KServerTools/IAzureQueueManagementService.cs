@@ -13,20 +13,24 @@ public interface IAzureQueueManagementService<T> where T : IAzureStorageServiceC
     /// <param name="queueName">The queue name.</param>
     /// <param name="maxMessages">Number of messages to peek (1-32).</param>
     /// <param name="cancellationToken">Cancellation token.</param>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     Task<Message[]> PeekMessagesAsync(string queueName, int maxMessages, CancellationToken cancellationToken);
 
     /// <summary>
     /// Enqueues multiple messages to a queue.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     Task EnqueueBatchAsync(string queueName, IEnumerable<string> messages, CancellationToken cancellationToken);
 
     /// <summary>
     /// Gets the approximate message count for a queue.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     Task<int> GetApproximateMessageCountAsync(string queueName, CancellationToken cancellationToken);
 
     /// <summary>
     /// Clears all messages from a queue.
     /// </summary>
+    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
     Task ClearMessagesAsync(string queueName, CancellationToken cancellationToken);
 }

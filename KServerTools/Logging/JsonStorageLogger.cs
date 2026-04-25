@@ -23,7 +23,7 @@ internal class JsonStorageLogger<T, C> : IJsonLogger where T : AzureStorageServi
         this.logger = logger;
         this.requestContextAccessor = requestContextAccessor;
         this.timer = new(TimeSpan.FromSeconds(30));
-        timer.Elapsed += async (sender, args) => await this.FlushLogs()
+        this.timer.Elapsed += async (sender, args) => await this.FlushLogs()
             .ConfigureAwait(false);
         this.timer.Start();
     }
@@ -35,19 +35,19 @@ internal class JsonStorageLogger<T, C> : IJsonLogger where T : AzureStorageServi
     }
 
     public void Error(string message, Exception exception, long? latency = null, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "") {
-        string logEvent = LoggingUtilities.GetLogEvent(LogLevel.Error, message, exception, filePath, lineNumber, memberName, accessor, requestContextAccessor, latency);
+        string logEvent = LoggingUtilities.GetLogEvent(LogLevel.Error, message, exception, filePath, lineNumber, memberName, this.accessor, this.requestContextAccessor, latency);
         this.logger.LogInformation(logEvent);
         this.logQueue.Enqueue(logEvent);
     }
 
     public void Info(string message, long? latency = null, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "") {
-        string logEvent = LoggingUtilities.GetLogEvent(LogLevel.Information, message, null, filePath, lineNumber, memberName, accessor, requestContextAccessor, latency);
+        string logEvent = LoggingUtilities.GetLogEvent(LogLevel.Information, message, null, filePath, lineNumber, memberName, this.accessor, this.requestContextAccessor, latency);
         this.logger.LogInformation(logEvent);
         this.logQueue.Enqueue(logEvent);
     }
 
     public void Warn(string message, Exception? exception = null, long? latency = null, [CallerFilePath] string filePath = "", [CallerLineNumber] int lineNumber = 0, [CallerMemberName] string memberName = "") {
-        string logEvent = LoggingUtilities.GetLogEvent(LogLevel.Warning, message, exception, filePath, lineNumber, memberName, accessor, requestContextAccessor, latency);
+        string logEvent = LoggingUtilities.GetLogEvent(LogLevel.Warning, message, exception, filePath, lineNumber, memberName, this.accessor, this.requestContextAccessor, latency);
         this.logger.LogWarning(logEvent);
         this.logQueue.Enqueue(logEvent);
     }
@@ -81,6 +81,7 @@ internal class JsonStorageLogger<T, C> : IJsonLogger where T : AzureStorageServi
                 sb.AppendLine(events);
                 count++;
             }
+
             using MemoryStream stream = new(Encoding.UTF8.GetBytes(sb.ToString()));
 
             try {
@@ -99,6 +100,6 @@ internal class JsonStorageLogger<T, C> : IJsonLogger where T : AzureStorageServi
         }
     }
 
-    private static string GetContainerAndBlobNames() => 
+    private static string GetContainerAndBlobNames() =>
         $"{DateTime.UtcNow:yyyy-MM-dd}/logs.jsonl";
 }
