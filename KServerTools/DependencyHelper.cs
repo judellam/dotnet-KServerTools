@@ -102,7 +102,8 @@ public static class DependencyHelper {
         ArgumentNullException.ThrowIfNullOrEmpty(sectionName, nameof(sectionName));
         return services
             .AddConfigSection<T>(sectionName)
-            .AddSingleton<IAzureStorageService<T>, AzureStorageService<T, C>>();
+            .AddSingleton<IAzureStorageService<T>, AzureStorageService<T, C>>()
+            .AddSingleton<IAzureBlobManagementService<T>>(sp => (IAzureBlobManagementService<T>)sp.GetRequiredService<IAzureStorageService<T>>());
     }
 
     public static IServiceCollection KSTAddAzureCosmosDb<T, C>(this IServiceCollection services, string sectionName) where T: class, IAzureCosmosDbConfiguration where C: class, ITokenCredentialService {
