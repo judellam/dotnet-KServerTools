@@ -3,7 +3,7 @@ namespace KServerTools.Common;
 using System.Runtime.CompilerServices;
 
 /// <summary>
-/// Custom logger interface. The regular ILogger interface works well, but this logger will outpout an event in a specific JSON format.
+/// Custom logger interface. The regular ILogger interface works well, but this logger will output an event in a specific JSON format.
 /// In addition it captures the callers file path, line number, and member name for better debugging.
 /// </summary>
 public interface IJsonLogger {

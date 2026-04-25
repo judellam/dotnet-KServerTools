@@ -1,130 +1,152 @@
 # KServerTools
-KServerTools is a .NET Core package that provides common functionality for Kestrel servers. This package aims to simplify the development and maintenance of Kestrel-based applications by offering a set of reusable tools and utilities.
 
-## Features
-- **Request Logging**: Easily log incoming requests and responses.
-- **Error Handling**: Centralized error handling and custom error responses.
-- **Configuration Management**: Simplified configuration setup and management.
-- **Performance Monitoring**: Tools for monitoring and improving server performance.
+A .NET 9 library that simplifies Azure service integration for ASP.NET Core applications. Register Azure Blob Storage, Queue Storage, Cosmos DB, SQL Server, and Key Vault with a single fluent builder — including credential management, caching, structured logging, and retry logic.
 
 ## Installation
-To install KServerTools nuget, run the following command in your project directory:
 
 ```bash
 dotnet add package KServerTools
 ```
 
-### Example Code repo
-[GitHub Example Repository](https://github.com/judellam/dotnet-KServerTools-example)
+Requires **.NET 9.0** or later.
 
-## Usage
-Here's a basic example of how to use KServerTools in your Kestrel server:
+## Quick Start
 
 ```csharp
-// TODO
 using KServerTools.Common;
 
 var builder = WebApplication.CreateBuilder(args);
-IServiceCollection services = builder.Services;
-services.AddControllers();
-services
-    // KST Add-ons
-    .KSTAddRequestContext<RequestContext>()
-    .KSTAddCommon()
-    .KSTAddLogger()
-    .KSTAddSqlServiceConnectionString<UserDatabaseSqlServerConfiguration>()
 
-    // Configs
-    .AddSingleton(static impl=> {
-        var configHelper = impl.GetService<ConfigurationHelper>() ?? throw new InvalidOperationException("ConfigurationHelper service is not available.");
-        var config = configHelper.TryGet<UserDatabaseSqlServerConfiguration>() ?? throw new InvalidOperationException("UserDatabaseSqlServerConfiguration could not be retrieved.");
-        return config;
-    })
+builder.Services.AddKServerTools(kst => kst
+    .AddCommon()                                        // IDefaultCredential, ConfigurationHelper, IMemoryCache
+    .AddRequestContext<RequestContext>()                 // Request tracking
+    .AddILogger<Program>()                              // IJsonLogger via ILogger<T>
+    .AddBlobStorage<StorageConfig>("AzureStorage")      // Blob upload/download/list/delete
+    .AddQueue<QueueConfig>("AzureQueue")                // Queue enqueue/dequeue/peek/batch
+    .AddCosmosDb<CosmosConfig>("CosmosDb")              // Cosmos CRUD and queries
+    .AddSql<SqlConfig>()                                // SQL Server with token auth
+    .AddKeyVault<AkvConfig>("KeyVault")                 // Secret and certificate retrieval
+);
 
 var app = builder.Build();
 app.Run();
 ```
 
-Example Config
-Update the {{USER_ID}} with a real user Id
-Update the {{PASSWORD_TO_BE_SET_HERE_EXAMPLE}} with your real password
 ```json
-  "UserDatabaseSqlServerConfiguration": {
-    "ConnectionStringData": "Server=tcp:localhost,1433;Initial Catalog=UserDb;Persist Security Info=False;User ID={{USER_ID}};Password={{PASSWORD_TO_BE_SET_HERE_EXAMPLE}};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;",
-    "Server": "localhost,1433",
-    "Database": "UserDb",
-    "Scopes": [
-      "https://database.windows.net/.default"
-    ]
+{
+  "AzureStorage": {
+    "AccountName": "mystorageaccount",
+    "Endpoint": "blob.core.windows.net"
+  },
+  "AzureQueue": {
+    "AccountName": "mystorageaccount",
+    "Endpoint": "queue.core.windows.net"
+  },
+  "CosmosDb": {
+    "EndpointUri": "https://myaccount.documents.azure.com:443/",
+    "PrimaryKey": ""
+  },
+  "KeyVault": {
+    "Uri": "https://my-vault.vault.azure.net/",
+    "CacheDurationInSeconds": 300
   }
+}
 ```
 
-### Service Principal Configuration / AKV Example ###
+## Features
 
-Example on how to use the injection and create the configuration objects.
-The DefaultServicePrincipalConfiguration inherits from ServicePrincipalConfiguration and allows you to load any number of SPs. You can just use ServicePrincipalConfiguration if you only have one.
+| Feature | Description | Docs |
+|---------|-------------|------|
+| **Fluent Builder** | Chain `Add*` calls to register all services in one block | [Guide](docs/fluent-builder.md) |
+| **Blob Storage** | Upload, download, append, delete, list, check existence | [Guide](docs/blob-storage.md) |
+| **Queue Storage** | Enqueue, dequeue, peek, batch, count, clear | [Guide](docs/queue-storage.md) |
+| **Cosmos DB** | CRUD, string and parameterized queries | [Guide](docs/cosmos-db.md) |
+| **SQL Server** | Token auth and connection string modes | [Guide](docs/sql-server.md) |
+| **Key Vault** | Secret and certificate retrieval, `akv://` resolution | [Guide](docs/key-vault.md) |
+| **Credentials** | Default credential, service principals, multi-tenant isolation | [Guide](docs/credentials.md) |
+| **Logging** | `IJsonLogger` with latency, caller info; `ILogger<T>` adapter | [Guide](docs/logging.md) |
+| **HTTP Client** | Base class with logging, headers, URL sanitization | [Guide](docs/http-client.md) |
+| **Error Handling** | Typed exceptions, retry with exponential backoff and jitter | [Guide](docs/error-handling.md) |
+| **Security** | Credential-scoped caching, encryption enforcement, URL sanitization | [Guide](docs/security.md) |
 
-When loading the SP via DI, you can specify the configuration name "ServicePrincipalConfiguration" in the line:
-    .KSTAddServicePrincipalCredentialWithConfig<DefaultServicePrincipalConfiguration>(nameof(ServicePrincipalConfiguration))
+📖 **[Full documentation →](docs/README.md)**
 
-Notice that the configuration uses akv://SpClientSecret. This means you need a secret resolver and an AKV.
+## Service Registration at a Glance
+
+Each `Add*` method registers one or more DI interfaces:
+
+| Builder Method | Interfaces Registered |
+|---------------|----------------------|
+| `AddBlobStorage<T>(section)` | `IAzureStorageService<T>`, `IAzureBlobManagementService<T>` |
+| `AddQueue<T>(section)` | `IAzureStorageQueueService<T>`, `IAzureQueueManagementService<T>` |
+| `AddCosmosDb<T>(section)` | `IAzureCosmosDb<T>` |
+| `AddSql<T>()` | `ISqlServerService<T>` |
+| `AddSqlConnectionString<T>()` | `ISqlServerService<T>` |
+| `AddKeyVault<T>(section)` | `IAzureKeyVaultService<T>` |
+
+All services support an explicit credential overload: `AddBlobStorage<T, C>(section)` where `C` is an `ITokenCredentialService`.
+
+## Service Principal with Key Vault Secrets
+
+For multi-tenant or cross-subscription scenarios:
 
 ```csharp
-// The configuration object where the details will be loaded into.
-public class DefaultServicePrincipalConfiguration : ServicePrincipalConfiguration {
-}
-
-/// ...
-var builder = WebApplication.CreateBuilder(args);
-IServiceCollection services = builder.Services;
-services
-    .KSTAddSecretResolver()
-    .KSTAddKeyVault<DefaultAzureKeyVaultConfiguration, IDefaultCredential>(nameof(AzureKeyVaultConfiguration)) // use the Default Credential
-    .KSTAddServicePrincipalCredentialWithConfig<DefaultServicePrincipalConfiguration>(nameof(ServicePrincipalConfiguration))
-    .KSTAddSqlService<UserDatabaseSqlServerConfiguration, IServicePrincipalCredential<DefaultServicePrincipalConfiguration>>()
-    .AddSingleton<UserDatabaseSqlServerConfiguration>(static impl=> {
-        var configHelper = impl.GetService<ConfigurationHelper>() ?? throw new InvalidOperationException("ConfigurationHelper service is not available.");
-        // Read from the appsettings.json
-        var config = configHelper.TryGet<UserDatabaseSqlServerConfiguration>() ?? throw new InvalidOperationException("UserDatabaseSqlServerConfiguration could not be retrieved.");
-        config.SecretResolver = GetSecretResolver<DefaultAzureKeyVaultConfiguration>(impl);
-        return config;
-    })
-
-    // ** In DI Code we need to register the AKV with the secret resolver //
-private static ISecretResolver GetSecretResolver<AKVConfig>(this IServiceProvider serviceProvider) where AKVConfig: IAzureKeyVaultConfiguration {
-    ISecretResolver secretResolver = serviceProvider.GetService<ISecretResolver>() ?? throw new InvalidOperationException("ISecretResolver service is not available.");
-    IAzureKeyVaultService<AKVConfig> akvService = serviceProvider.GetService<IAzureKeyVaultService<AKVConfig> >() ?? throw new InvalidOperationException("ISecretResolver service is not available.");
-    secretResolver.RegisterKeyVaultService(akvService);
-    return secretResolver;
-}
+builder.Services.AddKServerTools(kst => kst
+    .AddCommon()
+    .AddSecretResolver()
+    .AddKeyVault<AkvConfig>("AzureKeyVaultConfiguration")
+    .AddServicePrincipal<SpConfig>("ServicePrincipal")
+    .AddSql<SqlConfig, IServicePrincipalCredential<SpConfig>>()
+);
 ```
 
-Example of a configuration to get the SP secrets. The configuration name can be configured.
 ```json
+{
   "AzureKeyVaultConfiguration": {
-    "Uri": "https://{{AKV_NAME}}.vault.azure.net/",
+    "Uri": "https://my-vault.vault.azure.net/",
     "CacheDurationInSeconds": 300
   },
-  "ServicePrincipalConfiguration": {
-    "TenantId": "tenant-id",
-    "ApplicationId": "app-id",
+  "ServicePrincipal": {
+    "TenantId": "00000000-0000-0000-0000-000000000000",
+    "ApplicationId": "11111111-1111-1111-1111-111111111111",
     "SecretData": "akv://SpClientSecret"
-  },
+  }
+}
 ```
 
-### Azure Queue Example ###
+The `akv://SpClientSecret` reference is resolved at runtime through Key Vault. See the [Key Vault & Secrets guide](docs/key-vault.md) for full wiring details.
+
+## Legacy Registration
+
+If you prefer registering services individually without the fluent builder:
+
 ```csharp
-    private static IServiceCollection AddServerTools(this IServiceCollection serviceCollection) =>
-        serviceCollection
-            .KSTAddCommon() // Adds the IDefaultCredential
-            .KSTAddAzureStorageQueue<AzureStorageQueueConfig, IDefaultCredential>(nameof(AzureStorageQueueConfig));
+services
+    .KSTAddCommon()
+    .KSTAddRequestContext<RequestContext>()
+    .KSTAddLogger()
+    .KSTAddAzureStorageService<StorageConfig, IDefaultCredential>("AzureStorage")
+    .KSTAddAzureStorageQueue<QueueConfig, IDefaultCredential>("AzureQueue");
 ```
-```json
-  "AzureStorageQueueConfig" : {
-    "AccountName": "dastr",
-    "Endpoint": "queue.core.windows.net"
-  }
-```
+
+Both approaches produce identical DI registrations.
+
+## Example Repository
+
+A full working example is available at:
+[github.com/judellam/dotnet-KServerTools-example](https://github.com/judellam/dotnet-KServerTools-example)
+
+## API Compatibility Notes
+
+The following public API names contain spelling errors that are preserved for backward compatibility:
+
+| Identifier | Type | Intended Spelling |
+|-----------|------|-------------------|
+| `ServiceCredentalType` | Enum | `ServiceCredentialType` |
+| `EnqueMessageAsync` | Method on `IAzureStorageQueueService<T>` | `EnqueueMessageAsync` |
+| `DequeMessageAsync` | Method on `IAzureStorageQueueService<T>` | `DequeueMessageAsync` |
+
+These will not be renamed in the current major version to avoid breaking existing consumers. Newer interfaces (`IAzureQueueManagementService<T>`) use correct spelling.
 
 ## Contributing
 
