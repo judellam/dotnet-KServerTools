@@ -50,7 +50,7 @@ Update the {{USER_ID}} with a real user Id
 Update the {{PASSWORD_TO_BE_SET_HERE_EXAMPLE}} with your real password
 ```json
   "UserDatabaseSqlServerConfiguration": {
-    "ConnectionStringData": "Server=tcp:localhost,1433;Initial Catalog=UserDb;Persist Security Info=False;User ID={{USER_ID}};Password={{PASSWORD_TO_BE_SET_HERE_EXAMPLE}};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Connection Timeout=30;",
+    "ConnectionStringData": "Server=tcp:localhost,1433;Initial Catalog=UserDb;Persist Security Info=False;User ID={{USER_ID}};Password={{PASSWORD_TO_BE_SET_HERE_EXAMPLE}};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;",
     "Server": "localhost,1433",
     "Database": "UserDb",
     "Scopes": [

@@ -6,11 +6,11 @@ using Azure.Storage.Blobs;
 using Azure.Storage.Blobs.Specialized;
 using Microsoft.Extensions.Caching.Memory;
 
-internal class AzureStorageServiceInternal<T, C>(T config, C credential) : AzureStorageBase<T,C>(config, credential), IAzureStorageService<T> where T : IAzureStorageServiceConfig where C: ITokenCredentialService {
+internal class AzureStorageServiceInternal<T, C>(T config, C credential, IMemoryCache memoryCache) : AzureStorageBase<T,C>(config, credential, memoryCache), IAzureStorageService<T> where T : class, IAzureStorageServiceConfig where C: ITokenCredentialService {
     public async Task UploadBlobAsync(string containerName, string blobName, Stream stream, CancellationToken cancellationToken) {
         Verify(containerName, blobName);
 
-        BlobContainerClient containerClient = await this.GetContainerClient(containerName, cancellationToken)
+        BlobContainerClient containerClient = await this.GetContainerClient(containerName, true, cancellationToken)
             .ConfigureAwait(false);
 
         BlobClient blobClient = containerClient.GetBlobClient(blobName);
@@ -22,7 +22,7 @@ internal class AzureStorageServiceInternal<T, C>(T config, C credential) : Azure
     public async Task<Stream> DownloadBlobAsync(string containerName, string blobName, CancellationToken cancellationToken) {
         Verify(containerName, blobName);
 
-        BlobContainerClient blobContainerClient = await this.GetContainerClient(containerName, cancellationToken)
+        BlobContainerClient blobContainerClient = await this.GetContainerClient(containerName, false, cancellationToken)
             .ConfigureAwait(false);
 
         BlobClient blobClient = blobContainerClient.GetBlobClient(blobName);
@@ -37,7 +37,7 @@ internal class AzureStorageServiceInternal<T, C>(T config, C credential) : Azure
 
     public async Task AppendAsync(string containerName, string blobName, Stream stream, CancellationToken cancellationToken) {
         Verify(containerName, blobName);
-        BlobContainerClient blobContainerClient = await this.GetContainerClient(containerName, cancellationToken)
+        BlobContainerClient blobContainerClient = await this.GetContainerClient(containerName, true, cancellationToken)
             .ConfigureAwait(false);
 
         AppendBlobClient blobClient = blobContainerClient.GetAppendBlobClient(blobName);
@@ -48,18 +48,18 @@ internal class AzureStorageServiceInternal<T, C>(T config, C credential) : Azure
             .ConfigureAwait(false);
     }
 
-    protected async Task<BlobContainerClient> GetContainerClient(string containerName, CancellationToken cancellationToken) {
-        BlobContainerClient client;
-        string key = $"{this.config.AccountName}:{containerName}";
-        if (!this.memoryCache.TryGetValue(key, out client!)) {
+    protected async Task<BlobContainerClient> GetContainerClient(string containerName, bool createIfNotExists, CancellationToken cancellationToken) {
+        string key = $"blob:{this.config.AccountName}:{containerName}";
+        return await this.GetOrCreateCachedAsync(key, async () => {
             Uri storageUri = new($"https://{config.AccountName}.{config.Endpoint}/{containerName}");
-            client = new(storageUri, await this.credential.GetCredential(cancellationToken));
+            var client = new BlobContainerClient(storageUri, await this.credential.GetCredential(cancellationToken));
 
-            await client.CreateIfNotExistsAsync()
-                .ConfigureAwait(false);
+            if (createIfNotExists) {
+                await client.CreateIfNotExistsAsync()
+                    .ConfigureAwait(false);
+            }
 
-            this.memoryCache.Set(key, client, memoryCacheEntryOptions);
-        }
-        return client;
+            return client;
+        }).ConfigureAwait(false);
     }
 }

@@ -77,7 +77,9 @@ public abstract class HttpClientBase {
         }
         finally {
             sw.Stop();
-            this.logger.Info($"Ending request to: {endpoint}, StatusCode: {statusCode}, Success: {success}", sw.ElapsedMilliseconds);
+            // Log path only — query strings may contain tokens or secrets
+            string safePath = endpoint.GetLeftPart(UriPartial.Path);
+            this.logger.Info($"Ending request to: {safePath}, StatusCode: {statusCode}, Success: {success}", sw.ElapsedMilliseconds);
         }
     }
 }

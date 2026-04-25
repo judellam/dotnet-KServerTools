@@ -75,6 +75,7 @@ internal class SqlServerService<T, C>(T config, IJsonLogger logger, C credential
             InitialCatalog = this.config.Database,
             ConnectTimeout = 30,
             Pooling = true,
+            Encrypt = true,
         };
 
         SqlConnection connection = new(sqlConnectionStringBuilder.ConnectionString) {

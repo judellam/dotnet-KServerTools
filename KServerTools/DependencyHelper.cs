@@ -8,6 +8,15 @@ using Microsoft.Extensions.DependencyInjection;
 /// </summary>
 public static class DependencyHelper {
     /// <summary>
+    /// Fluent entry point for configuring KServerTools services.
+    /// </summary>
+    public static IServiceCollection AddKServerTools(this IServiceCollection services, Action<KSTBuilder> configure) {
+        var builder = new KSTBuilder(services);
+        configure(builder);
+        return services;
+    }
+
+    /// <summary>
     /// Add the configuration helper to the service collection. This helps parse the appsettions.json file.
     /// </summary>
     public static IServiceCollection KSTAddCommon(this IServiceCollection services) =>
@@ -39,30 +48,19 @@ public static class DependencyHelper {
 
     /// <summary>
     /// Add the key vault service to the service collection.
-    /// todo: inject the type of credential to use instead of the default credential.
     /// </summary>
-    /// <remarks>
-    /// Requires the ConfigurationHelper service to be registered. See <see cref="ServerToolsAddConfigurationHelper()"/>.
-    /// Requires the DefaultCredential service to be registered. See <see cref="ServerToolsAddDefaultCredential()"/>.
-    /// </remarks>
     public static IServiceCollection KSTAddKeyVault<T, C>(this IServiceCollection services, string sectionName) where T: class, IAzureKeyVaultConfiguration where C: ITokenCredentialService =>
-        services.AddSingleton<T>(impl => {
-            ConfigurationHelper configHelper = impl.GetConfigurationHelper();
-            var config = configHelper.TryGet<T>(sectionName) ?? throw new InvalidOperationException("AzureKeyVaultConfiguration could not be retrieved.");
-            return config;
-        }).AddSingleton<IAzureKeyVaultService<T>, AzureKeyVaultService<T, C>>();
+        services
+            .AddConfigSection<T>(sectionName)
+            .AddSingleton<IAzureKeyVaultService<T>, AzureKeyVaultService<T, C>>();
     
     /// <summary>
-    /// Add the configuration helper to the service collection.
+    /// Add the storage-backed logger.
     /// </summary>
-    /// <typeparam name="T">An impl of IAzureStorageServiceConfig</typeparam>
-    /// <typeparam name="C">The Credential you want to use to write to storage</typeparam>
     public static IServiceCollection KSTAddLogger<T, C>(this IServiceCollection services, string storageLogConfigSectionName) where T: AzureStorageServiceLogConfig where C: class, ITokenCredentialService {
         ArgumentNullException.ThrowIfNullOrEmpty(storageLogConfigSectionName, nameof(storageLogConfigSectionName));
-        return services.AddSingleton<T>(impl => {
-                ConfigurationHelper configHelper = impl.GetConfigurationHelper();
-                return configHelper.TryGet<T>(storageLogConfigSectionName) ?? throw new InvalidOperationException("AzureStorageServiceConfig could not be retrieved.");
-            })
+        return services
+            .AddConfigSection<T>(storageLogConfigSectionName)
             .AddSingleton<AzureStorageServiceInternal<T, C>>()
             .AddSingleton<IJsonLogger, JsonStorageLogger<T, C>>();
     }
@@ -73,8 +71,6 @@ public static class DependencyHelper {
     /// <summary>
     /// Add the secret resolver to the service collection.
     /// </summary>
-    /// <remarks>
-    /// Key Vault Resolver is required to be registered. See <see cref="ServerToolsAddKeyVault()"/>.
     public static IServiceCollection KSTAddSecretResolver(this IServiceCollection services) =>
         services.AddSingleton<ISecretResolver, SecretResolver>();
 
@@ -92,47 +88,42 @@ public static class DependencyHelper {
     public static IServiceCollection KSTAddSqlServiceConnectionString<T>(this IServiceCollection services)
         where T: ISqlServerDatabaseConfiguration => services.AddSingleton<ISqlServerService<T>, SqlServerConnstionString<T>>();
 
-    private static ConfigurationHelper GetConfigurationHelper(this IServiceProvider provider) =>
-        provider.GetService<ConfigurationHelper>() ?? throw new InvalidOperationException("ConfigurationHelper service is not available.");
-
     /// <summary>
-    /// Adds a Azure Storage  service to the service collection. It can be referenced like IAzureStorageService<typeparamref name="T"/>>
+    /// Adds an Azure Storage service to the service collection.
     /// </summary>
-    /// <typeparam name="T">Configuration to the queue</typeparam>
-    /// <typeparam name="C">Credential to be used when accessing</typeparam>
-    /// <param name="services"></param>
-    /// <param name="sectionName">Configuration name</param>
     public static IServiceCollection KSTAddAzureStorageService<T, C>(this IServiceCollection services, string sectionName) where T: class, IAzureStorageServiceConfig where C: class, ITokenCredentialService {
         ArgumentNullException.ThrowIfNullOrEmpty(sectionName, nameof(sectionName));
-        return services.AddSingleton<T>(impl => {
-                ConfigurationHelper configHelper = impl.GetConfigurationHelper();
-                return configHelper.TryGet<T>(sectionName) ?? throw new InvalidOperationException("AzureStorageServiceConfig could not be retrieved.");
-            })
+        return services
+            .AddConfigSection<T>(sectionName)
             .AddSingleton<IAzureStorageService<T>, AzureStorageService<T, C>>();
     }
 
     public static IServiceCollection KSTAddAzureCosmosDb<T, C>(this IServiceCollection services, string sectionName) where T: class, IAzureCosmosDbConfiguration where C: class, ITokenCredentialService {
         ArgumentNullException.ThrowIfNullOrEmpty(sectionName, nameof(sectionName));
-        return services.AddSingleton<T>(impl => {
-                ConfigurationHelper configHelper = impl.GetConfigurationHelper();
-                return configHelper.TryGet<T>(sectionName) ?? throw new InvalidOperationException("AzureCosmosDbConfiguration could not be retrieved.");
-            })
+        return services
+            .AddConfigSection<T>(sectionName)
             .AddSingleton<IAzureCosmosDb<T>, AzureCosmosDb<T, C>>();
     }
 
     /// <summary>
-    /// Adds a Azure Storage Queue service to the service collection. It can be referenced like IAzureStorageQueueService<typeparamref name="T"/>>
+    /// Adds an Azure Storage Queue service to the service collection.
     /// </summary>
-    /// <typeparam name="T">Configuration to the queue</typeparam>
-    /// <typeparam name="C">Credential to be used when accessing</typeparam>
-    /// <param name="services"></param>
-    /// <param name="sectionName">Configuration name</param>
     public static IServiceCollection KSTAddAzureStorageQueue<T,C>(this IServiceCollection services, string sectionName) where T: class, IAzureStorageServiceConfig where C: class, ITokenCredentialService {
         ArgumentNullException.ThrowIfNullOrEmpty(sectionName, nameof(sectionName));
-        return services.AddSingleton<T>(impl => {
-                ConfigurationHelper configHelper = impl.GetConfigurationHelper();
-                return configHelper.TryGet<T>(sectionName) ?? throw new InvalidOperationException("AzureStorageServiceConfig could not be retrieved.");
-            })
+        return services
+            .AddConfigSection<T>(sectionName)
             .AddSingleton<IAzureStorageQueueService<T>, AzureStorageQueueService<T, C>>();
     }
+
+    /// <summary>
+    /// Registers a configuration section as a singleton, loaded via ConfigurationHelper.
+    /// </summary>
+    internal static IServiceCollection AddConfigSection<T>(this IServiceCollection services, string sectionName) where T : class =>
+        services.AddSingleton<T>(impl => {
+            ConfigurationHelper configHelper = impl.GetConfigurationHelper();
+            return configHelper.TryGet<T>(sectionName) ?? throw new InvalidOperationException($"{typeof(T).Name} could not be retrieved from section '{sectionName}'.");
+        });
+
+    internal static ConfigurationHelper GetConfigurationHelper(this IServiceProvider provider) =>
+        provider.GetService<ConfigurationHelper>() ?? throw new InvalidOperationException("ConfigurationHelper service is not available.");
 }

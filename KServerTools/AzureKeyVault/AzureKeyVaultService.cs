@@ -4,99 +4,61 @@ using Azure.Core;
 using Azure.Security.KeyVault.Certificates;
 using Azure.Security.KeyVault.Secrets;
 using Microsoft.Extensions.Caching.Memory;
-using System.Diagnostics;
 using System.Security.Cryptography.X509Certificates;
 
 /// <summary>
 /// The Azure Key Vault Service
 /// </summary>
-/// <remarks>
-/// This service is responsible for retrieving secrets from Azure Key Vault.
-/// Requires: dotnet add package Microsoft.Extensions.Caching.Memory
-/// Requires: dotnet add package Azure.Security.KeyVault.Secrets
-/// </remarks>
-internal class AzureKeyVaultService<T, C> : IAzureKeyVaultService<T> where T: IAzureKeyVaultConfiguration where C: ITokenCredentialService {
-    private readonly T azureKeyVaultConfiguration;
+internal class AzureKeyVaultService<T, C> : AzureServiceBase<T>, IAzureKeyVaultService<T> where T: class, IAzureKeyVaultConfiguration where C: ITokenCredentialService {
     private readonly C credentialResolver;
-    private readonly IMemoryCache memoryCache;
-    private readonly IJsonLogger logger;
     private readonly Uri keyVaultUri;
     private const string SecretPrefix = "secret-";
     private const string CertificatePrefix = "certificate-";
 
-    public AzureKeyVaultService(T azureKeyVaultConfiguration, C credentialResolver, IMemoryCache memoryCache, IJsonLogger logger) {
-        this.azureKeyVaultConfiguration = azureKeyVaultConfiguration;
-        this.keyVaultUri = new Uri(this.azureKeyVaultConfiguration.Uri);
-
+    public AzureKeyVaultService(T azureKeyVaultConfiguration, C credentialResolver, IMemoryCache memoryCache, IJsonLogger logger)
+        : base(azureKeyVaultConfiguration, memoryCache, typeof(C).FullName ?? typeof(C).Name, logger) {
+        this.keyVaultUri = new Uri(azureKeyVaultConfiguration.Uri);
         this.credentialResolver = credentialResolver;
-        this.memoryCache = memoryCache;
-        this.logger = logger;
     }
 
-    public async Task<X509Certificate2> GetCertificate(string certificateName, CancellationToken cancellationToken) {
-        Stopwatch stopwatch = Stopwatch.StartNew();
-        string cacheLookup = $"{CertificatePrefix}{certificateName}";
-        try {
-            this.logger.Info($"Retrieving certificate from Azure Key Vault: {this.keyVaultUri}, Cerificate: {certificateName}");
+    public Task<X509Certificate2> GetCertificate(string certificateName, CancellationToken cancellationToken) {
+        string cacheKey = $"akv:{this.keyVaultUri.Host}:{CertificatePrefix}{certificateName}";
+        var cacheOptions = new MemoryCacheEntryOptions {
+            AbsoluteExpiration = DateTimeOffset.Now.AddSeconds(this.config.CacheDurationInSeconds)
+        };
 
-            X509Certificate2? certificate;
-            if (this.memoryCache.TryGetValue(cacheLookup, out certificate) && certificate != null) {
-                return certificate;
-            }
+        return this.LoggedOperationAsync($"Azure Key Vault certificate: {certificateName}", async () => {
+            return await this.GetOrCreateCachedAsync(cacheKey, async () => {
+                TokenCredential credential = await this.credentialResolver.GetCredential(cancellationToken)
+                    .ConfigureAwait(false);
 
-            TokenCredential credential = await this.credentialResolver.GetCredential(cancellationToken)
-                .ConfigureAwait(false);
+                CertificateClient certificateClient = new(this.keyVaultUri, credential);
+                cancellationToken.ThrowIfCancellationRequested();
+                KeyVaultCertificateWithPolicy keyVaultCertificate = await certificateClient.GetCertificateAsync(certificateName, cancellationToken)
+                    .ConfigureAwait(false);
 
-            CertificateClient certificateClient = new(this.keyVaultUri, credential);
-            cancellationToken.ThrowIfCancellationRequested();
-            KeyVaultCertificateWithPolicy keyVaultCertificate = await certificateClient.GetCertificateAsync(certificateName, cancellationToken)
-                .ConfigureAwait(false);
-
-            certificate = X509CertificateLoader.LoadCertificate(keyVaultCertificate.Cer);
-
-            this.memoryCache.Set(
-                cacheLookup,
-                certificate,
-                DateTimeOffset.Now.AddSeconds(this.azureKeyVaultConfiguration.CacheDurationInSeconds));
-
-            return certificate;
-        } catch (Exception ex) {
-            this.logger.Error($"Failed to retrieve certificate from Azure Key Vault: {certificateName}", ex);
-            throw;
-        } finally {
-            stopwatch.Stop();
-            this.logger.Info($"Azure Key Vault request: {certificateName}", stopwatch.ElapsedMilliseconds);
-        }
+                return X509CertificateLoader.LoadCertificate(keyVaultCertificate.Cer);
+            }, cacheOptions).ConfigureAwait(false);
+        });
     }
 
-    public async Task<string> GetSecretAsync(string secretName, CancellationToken cancellationToken) {
-        Stopwatch stopwatch = Stopwatch.StartNew();
-        string cacheLookup = $"{SecretPrefix}{secretName}";
-        try {
-            if (this.memoryCache.TryGetValue(cacheLookup, out string? secretValue) && !string.IsNullOrWhiteSpace(secretValue)) {
-                return secretValue;
-            }
+    public Task<string> GetSecretAsync(string secretName, CancellationToken cancellationToken) {
+        string cacheKey = $"akv:{this.keyVaultUri.Host}:{SecretPrefix}{secretName}";
+        var cacheOptions = new MemoryCacheEntryOptions {
+            AbsoluteExpiration = DateTimeOffset.Now.AddSeconds(this.config.CacheDurationInSeconds)
+        };
 
-            TokenCredential credential = await this.credentialResolver.GetCredential(cancellationToken)
-                .ConfigureAwait(false);
-            
-            SecretClient secretClient = new(this.keyVaultUri, credential);
-            KeyVaultSecret secret = await secretClient.GetSecretAsync(secretName, null, cancellationToken)
-                .ConfigureAwait(false);
-            
-            secretValue = secret.Value;
-            this.memoryCache.Set(
-                cacheLookup,
-                secretValue,
-                DateTimeOffset.Now.AddSeconds(this.azureKeyVaultConfiguration.CacheDurationInSeconds));
+        return this.LoggedOperationAsync($"Azure Key Vault secret: {secretName}", async () => {
+            return await this.GetOrCreateCachedAsync(cacheKey, async () => {
+                TokenCredential credential = await this.credentialResolver.GetCredential(cancellationToken)
+                    .ConfigureAwait(false);
 
-            return secretValue;
-        } catch (Exception ex) {
-            this.logger.Error($"Failed to retrieve secret from Azure Key Vault: {secretName}", ex);
-            throw;
-        } finally {
-            stopwatch.Stop();
-            this.logger.Info($"Azure Key Vault request: {secretName}, Elapsed: {stopwatch.ElapsedMilliseconds}ms");
-        }
+                SecretClient secretClient = new(this.keyVaultUri, credential);
+                KeyVaultSecret secret = await secretClient.GetSecretAsync(secretName, null, cancellationToken)
+                    .ConfigureAwait(false);
+
+                return secret.Value;
+            }, cacheOptions).ConfigureAwait(false);
+        });
     }
 }

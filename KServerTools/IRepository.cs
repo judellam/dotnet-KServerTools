@@ -19,7 +19,7 @@ public interface IEntityLookup {
 /// <typeparam name="M">The Model that function call will interact or return</typeparam>
 /// <typeparam name="L">The look up model. They can be the same, but the look up model is usually a smaller record.</typeparam>
 public interface IRepository<M, L> where M : class, IEntity where L : class, IEntityLookup {
-    Task<M> GetAsync(L lookup, CancellationToken cancellationToken);
+    Task<M?> GetAsync(L lookup, CancellationToken cancellationToken);
     Task<bool> CreateOrUpdateAsync(M model, CancellationToken cancellationToken);
     Task<bool> DeleteAsync(L lookup, CancellationToken cancellationToken);
 }
@@ -30,5 +30,5 @@ public interface IRepository<M, L> where M : class, IEntity where L : class, IEn
 /// <typeparam name="M">The Model that function call will interact or return</typeparam>
 /// <typeparam name="L">The look up model. They can be the same, but the look up model is usually a smaller record.</typeparam>
 public interface IGetMultiple<M, L> where M : class, IEntity where L : class, IEntityLookup {
-    Task<IEnumerable<M>> GetMultipleAsync(L lookup, CancellationToken cancellationToken);
+    Task<IEnumerable<M?>> GetMultipleAsync(L lookup, CancellationToken cancellationToken);
 }

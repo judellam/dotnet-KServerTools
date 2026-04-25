@@ -4,13 +4,8 @@ using System.Net;
 using Microsoft.Azure.Cosmos;
 using Microsoft.Extensions.Caching.Memory;
 
-internal class AzureCosmosDb<T, C>(T configuration, C credential) : IAzureCosmosDb<T>, IDisposable where T : IAzureCosmosDbConfiguration where C : ITokenCredentialService {
-    private readonly T configuration = configuration;
+internal class AzureCosmosDb<T, C>(T configuration, C credential, IMemoryCache memoryCache, IJsonLogger logger) : AzureServiceBase<T>(configuration, memoryCache, typeof(C).FullName ?? typeof(C).Name, logger), IAzureCosmosDb<T>, IDisposable where T : class, IAzureCosmosDbConfiguration where C : ITokenCredentialService {
     private readonly C credential = credential;
-    protected readonly MemoryCache memoryCache = new(new MemoryCacheOptions());
-    protected static readonly MemoryCacheEntryOptions memoryCacheEntryOptions = new() {
-        SlidingExpiration = TimeSpan.FromMinutes(50)
-    };
 
     public async Task<bool> CreateDatabaseAsync(string database, CancellationToken cancellationToken) {
         ArgumentNullException.ThrowIfNullOrEmpty(database, nameof(database));
@@ -67,27 +62,23 @@ internal class AzureCosmosDb<T, C>(T configuration, C credential) : IAzureCosmos
     }
 
     public void Dispose() {
-        this.memoryCache?.Dispose();
+        // IMemoryCache lifetime managed by DI container
     }
 
     private async ValueTask<CosmosClient> GetClient(string databaseName) {
-        CosmosClient client;
-        string key = $"{databaseName}";
-        if (!this.memoryCache.TryGetValue(key, out client!)) {
+        string key = $"cosmos:{databaseName}";
+        return await this.GetOrCreateCachedAsync(key, async () => {
             var options = new CosmosClientOptions {
                 SerializerOptions = new CosmosSerializationOptions {
                     PropertyNamingPolicy = CosmosPropertyNamingPolicy.CamelCase
                 }
             };
             if (this.credential != null) {
-                client = new(this.configuration.EndpointUri, await this.credential.GetCredential(CancellationToken.None), options);
+                return new CosmosClient(this.config.EndpointUri, await this.credential.GetCredential(CancellationToken.None), options);
             } else {
-                client = new(this.configuration.EndpointUri, this.configuration.PrimaryKey, options);
+                return new CosmosClient(this.config.EndpointUri, this.config.PrimaryKey, options);
             }
-            this.memoryCache.Set(key, client, memoryCacheEntryOptions);
-        }
-
-        return client;
+        }).ConfigureAwait(false);
     }
 
     private async Task<Container> GetContainer(string database, string container, CancellationToken cancellationToken) {

@@ -7,6 +7,7 @@ internal class SecretResolver : ISecretResolver {
     }
 
     private IAzureKeyVaultInternal? keyVaultService = null;
+    private int registered = 0;
 
     public async ValueTask<string> Resolve(string secret, CancellationToken cancellationToken) {
         var (type, value) = GetSecretType(secret);
@@ -21,6 +22,9 @@ internal class SecretResolver : ISecretResolver {
     }
 
     public void RegisterKeyVaultService(IAzureKeyVaultInternal keyVaultService) {
+        if (Interlocked.CompareExchange(ref this.registered, 1, 0) != 0) {
+            throw new InvalidOperationException("KeyVault service has already been registered. SecretResolver binding is immutable after initialization.");
+        }
         this.keyVaultService = keyVaultService;
     } 
 
