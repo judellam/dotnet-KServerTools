@@ -5,11 +5,12 @@ using Microsoft.Data.SqlClient;
 
 /// <summary>
 /// Service for interacting with a SQL Server database.
-/// todo: Remove the service principal credential if not needed.
 /// </summary>
-/// <typeparam name="T">The configuration for the database.</typeparam>
-/// <param name="config"></param>
-/// <param name="logger"></param>
+/// <typeparam name="T">The configuration type for the database.</typeparam>
+/// <typeparam name="C">The credential type used for token-based authentication.</typeparam>
+/// <param name="config">The SQL Server database configuration.</param>
+/// <param name="logger">The logger for structured JSON output.</param>
+/// <param name="credential">The credential service used to obtain access tokens.</param>
 /// <remarks>
 /// Required package: Microsoft.Data.SqlClient
 /// Example configuration found in appsettings.json:
@@ -27,6 +28,13 @@ internal class SqlServerService<T, C>(T config, IJsonLogger logger, C credential
     private readonly IJsonLogger logger = logger;
     private readonly C? credential = credential;
 
+    /// <summary>
+    /// Executes a non-query SQL command (INSERT, UPDATE, DELETE) and returns the number of rows affected.
+    /// </summary>
+    /// <param name="query">The SQL query to execute.</param>
+    /// <param name="parameters">Optional SQL parameters for the query.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation.</param>
+    /// <returns>The number of rows affected by the command.</returns>
     public async Task<int> NonQueryAsync(string query, IList<SqlParameter>? parameters, CancellationToken cancellationToken) {
         InternalServerErrorException.ThrowIfArgumentIsNull(query, nameof(query));
         cancellationToken.ThrowIfCancellationRequested();
@@ -43,9 +51,14 @@ internal class SqlServerService<T, C>(T config, IJsonLogger logger, C credential
     }
 
     /// <summary>
-    /// Execute a query and return a SqlDataReader. The data reader must be disposed of.
+    /// Executes a SQL query and processes the result set through a reader callback.
     /// </summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
+    /// <typeparam name="M">The return type produced by the reader callback.</typeparam>
+    /// <param name="query">The SQL query to execute.</param>
+    /// <param name="parameters">Optional SQL parameters for the query.</param>
+    /// <param name="onRead">A callback that processes the <see cref="SqlDataReader"/> and produces a result.</param>
+    /// <param name="cancellationToken">A token to observe for cancellation.</param>
+    /// <returns>The result produced by the <paramref name="onRead"/> callback.</returns>
     public async Task<M> QueryAsync<M>(string query, IList<SqlParameter>? parameters, Func<SqlDataReader, Task<M>> onRead, CancellationToken cancellationToken) {
         InternalServerErrorException.ThrowIfArgumentIsNull(query, nameof(query));
         cancellationToken.ThrowIfCancellationRequested();
@@ -62,6 +75,11 @@ internal class SqlServerService<T, C>(T config, IJsonLogger logger, C credential
         }, cancellationToken);
     }
 
+    /// <summary>
+    /// Gets or creates a SQL connection using either a connection string or token-based authentication.
+    /// </summary>
+    /// <param name="cancellationToken">A token to observe for cancellation.</param>
+    /// <returns>An open <see cref="SqlConnection"/>.</returns>
     public virtual async Task<SqlConnection> GetOrCreateConnection(CancellationToken cancellationToken) {
         if (!string.IsNullOrEmpty(this.config.ConnectionStringData)) {
             var connStringConnection = new SqlConnection(await this.config.GetConnectionString(cancellationToken));
@@ -100,12 +118,4 @@ internal class SqlServerService<T, C>(T config, IJsonLogger logger, C credential
 
         return connection;
     }
-}
-
-/// <summary>
-/// When only a connection string is provided.
-/// </summary>
-internal class SqlServerConnstionString<T>(T config, IJsonLogger logger)
-    : SqlServerService<T, ITokenCredentialService>(config, logger, null!)
-    where T : ISqlServerDatabaseConfiguration {
 }
