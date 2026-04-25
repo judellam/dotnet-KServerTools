@@ -122,4 +122,136 @@ public class KSTBuilderTests {
     private class MockRequestContextAccessor : IRequestContextAccessor {
         public IRequestContext? GetRequestContext() => null;
     }
+
+    // --- Additional builder coverage ---
+
+    [Fact]
+    public void AddBlobStorage_WithoutCredential_Throws() {
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+
+        Assert.Throws<InvalidOperationException>(() =>
+            services.AddKServerTools(kst => kst
+                .AddCommon()
+                .AddBlobStorage<TestStorageConfig>("StorageSection")
+            )
+        );
+    }
+
+    [Fact]
+    public void AddQueue_WithoutCredential_Throws() {
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+
+        Assert.Throws<InvalidOperationException>(() =>
+            services.AddKServerTools(kst => kst
+                .AddCommon()
+                .AddQueue<TestStorageConfig>("QueueSection")
+            )
+        );
+    }
+
+    [Fact]
+    public void AddCosmosDb_WithoutCredential_Throws() {
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+
+        Assert.Throws<InvalidOperationException>(() =>
+            services.AddKServerTools(kst => kst
+                .AddCommon()
+                .AddCosmosDb<TestCosmosConfig>("CosmosSection")
+            )
+        );
+    }
+
+    [Fact]
+    public void AddSql_WithoutCredential_Throws() {
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+
+        Assert.Throws<InvalidOperationException>(() =>
+            services.AddKServerTools(kst => kst
+                .AddCommon()
+                .AddSql<TestSqlConfig>()
+            )
+        );
+    }
+
+    [Fact]
+    public void AddSqlConnectionString_DoesNotRequireCredential() {
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+
+        // Should not throw — connection string auth doesn't need a credential
+        services.AddKServerTools(kst => kst
+            .AddCommon()
+            .AddSqlConnectionString<TestSqlConfig>()
+        );
+
+        Assert.Contains(services, sd => sd.ServiceType == typeof(ISqlServerService<TestSqlConfig>));
+    }
+
+    [Fact]
+    public void AddCommon_IsIdempotent() {
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+
+        services.AddKServerTools(kst => kst
+            .AddCommon()
+            .AddCommon()
+            .AddCommon()
+        );
+
+        // ConfigurationHelper should be registered only once
+        Assert.Single(services.Where(sd => sd.ServiceType == typeof(ConfigurationHelper)));
+    }
+
+    [Fact]
+    public void EnsureCommon_AutoRegistersWhenNotExplicit() {
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder().Build());
+
+        // AddSecretResolver calls EnsureCommon internally — should auto-register common
+        services.AddKServerTools(kst => kst.AddSecretResolver());
+
+        var provider = services.BuildServiceProvider();
+        Assert.NotNull(provider.GetService<ConfigurationHelper>());
+        Assert.NotNull(provider.GetService<ISecretResolver>());
+    }
+
+    [Fact]
+    public void AddKeyVault_WithExplicitCredential_RegistersService() {
+        var services = new ServiceCollection();
+        services.AddSingleton<IConfiguration>(new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?> {
+                ["TestKv:Uri"] = "https://myvault.vault.azure.net/",
+                ["TestKv:CacheDurationInSeconds"] = "300"
+            }).Build());
+
+        services.AddKServerTools(kst => kst
+            .AddCommon()
+            .AddKeyVault<TestKeyVaultConfig, IDefaultCredential>("TestKv")
+        );
+
+        Assert.Contains(services, sd => sd.ServiceType == typeof(IAzureKeyVaultService<TestKeyVaultConfig>));
+    }
+
+    private class TestStorageConfig : IAzureStorageServiceConfig {
+        public string AccountName { get; set; } = "testaccount";
+        public string Endpoint { get; set; } = "blob.core.windows.net";
+    }
+
+    private class TestCosmosConfig : IAzureCosmosDbConfiguration {
+        public string EndpointUri { get; set; } = "https://test.documents.azure.com:443/";
+        public string PrimaryKey { get; set; } = "";
+    }
+
+    private class TestSqlConfig : ISqlServerDatabaseConfiguration {
+        public string Server { get; } = "localhost";
+        public string Database { get; } = "testdb";
+        public string[] Scopes { get; } = ["https://database.windows.net/.default"];
+        public string? ConnectionStringData { get; } = "Server=localhost;Database=testdb;";
+        public Task<string?> GetConnectionString(CancellationToken cancellationToken) =>
+            Task.FromResult<string?>(ConnectionStringData);
+    }
 }

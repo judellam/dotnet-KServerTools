@@ -44,4 +44,26 @@ public class SecretResolverTests {
         Assert.Equal("resolved-value", result);
         mockService.Verify(s => s.GetSecretAsync("mysecretname", It.IsAny<CancellationToken>()), Moq.Times.Once);
     }
+
+    [Fact]
+    public async Task Resolve_EmptyString_ReturnsAsIs() {
+        var resolver = new SecretResolver();
+        string result = await resolver.Resolve("", CancellationToken.None);
+        Assert.Equal("", result);
+    }
+
+    [Fact]
+    public async Task Resolve_HttpsUri_TreatedAsLocalSecret() {
+        var resolver = new SecretResolver();
+        string result = await resolver.Resolve("https://example.com/path", CancellationToken.None);
+        Assert.Equal("https://example.com/path", result);
+    }
+
+    [Fact]
+    public async Task Resolve_ConnectionString_TreatedAsLocalSecret() {
+        var resolver = new SecretResolver();
+        string connStr = "Server=myserver;Database=mydb;User=admin;Password=secret123";
+        string result = await resolver.Resolve(connStr, CancellationToken.None);
+        Assert.Equal(connStr, result);
+    }
 }
