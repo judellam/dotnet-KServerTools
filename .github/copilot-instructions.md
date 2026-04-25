@@ -11,7 +11,15 @@ dotnet build KServerTools --no-restore
 dotnet build dotnet-KServerTools.sln
 ```
 
-There is no test project in this repository. CI runs restore + build only (`.github/workflows/dotnet.yml`).
+## Tests
+
+```bash
+dotnet test KServerTools.Tests
+```
+
+Test project uses xUnit + Moq. Tests cover: Retry, SecretResolver, ServiceExceptions, AzureServiceBase, KSTBuilder, ILoggerAdapter, ConfigurationHelper.
+
+CI runs restore + build (`.github/workflows/dotnet.yml`).
 
 ## Architecture
 

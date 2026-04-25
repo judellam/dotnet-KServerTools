@@ -69,6 +69,13 @@ public static class DependencyHelper {
         services.AddSingleton<IJsonLogger, JsonLogger>();
 
     /// <summary>
+    /// Register IJsonLogger backed by Microsoft.Extensions.Logging.ILogger&lt;T&gt;.
+    /// Use this when you want to integrate with the standard ILogger pipeline (e.g., Serilog, Application Insights).
+    /// </summary>
+    public static IServiceCollection KSTAddLogger<T>(this IServiceCollection services) =>
+        services.AddSingleton<IJsonLogger, ILoggerAdapter<T>>();
+
+    /// <summary>
     /// Add the secret resolver to the service collection.
     /// </summary>
     public static IServiceCollection KSTAddSecretResolver(this IServiceCollection services) =>

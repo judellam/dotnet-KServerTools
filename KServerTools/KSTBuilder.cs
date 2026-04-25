@@ -167,6 +167,15 @@ public class KSTBuilder {
     }
 
     /// <summary>
+    /// Registers IJsonLogger backed by Microsoft.Extensions.Logging.ILogger&lt;T&gt;.
+    /// </summary>
+    public KSTBuilder AddILogger<T>() {
+        this.EnsureCommon();
+        this.Services.KSTAddLogger<T>();
+        return this;
+    }
+
+    /// <summary>
     /// Registers a storage-backed logger using the default credential.
     /// </summary>
     public KSTBuilder AddStorageLogger<T>(string sectionName) where T : AzureStorageServiceLogConfig {
