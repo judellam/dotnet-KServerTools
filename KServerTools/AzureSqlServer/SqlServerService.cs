@@ -39,7 +39,7 @@ internal class SqlServerService<T, C>(T config, IJsonLogger logger, C credential
             }
 
             return await command.ExecuteNonQueryAsync(cancellationToken);
-        });
+        }, cancellationToken);
     }
 
     /// <summary>
@@ -58,7 +58,7 @@ internal class SqlServerService<T, C>(T config, IJsonLogger logger, C credential
 
             using SqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
             return await onRead(reader);
-        });
+        }, cancellationToken);
     }
 
     public virtual async Task<SqlConnection> GetOrCreateConnection(CancellationToken cancellationToken) {

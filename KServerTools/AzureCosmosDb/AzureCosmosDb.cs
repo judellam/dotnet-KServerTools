@@ -13,7 +13,7 @@ internal class AzureCosmosDb<T, C>(T configuration, C credential, IMemoryCache m
             CosmosClient client = await this.GetClient();
             DatabaseResponse response = await client.CreateDatabaseIfNotExistsAsync(database, cancellationToken: cancellationToken).ConfigureAwait(false);
             return response.StatusCode == HttpStatusCode.Created;
-        });
+        }, cancellationToken);
     }
 
     public async Task<bool> CreateContainerAsync(string database, string container, string partitionKey, CancellationToken cancellationToken) {
@@ -24,7 +24,7 @@ internal class AzureCosmosDb<T, C>(T configuration, C credential, IMemoryCache m
             Database cosmosDatabase = client.GetDatabase(database);
             ContainerResponse response = await cosmosDatabase.CreateContainerIfNotExistsAsync(container, partitionKey, cancellationToken: cancellationToken).ConfigureAwait(false);
             return response.StatusCode == HttpStatusCode.Created;
-        });
+        }, cancellationToken);
     }
 
     public async Task<I> GetItemAsync<I>(string database, string container, string itemId, string partitionKey, CancellationToken cancellationToken) where I : ICosmosEntity {
@@ -35,7 +35,7 @@ internal class AzureCosmosDb<T, C>(T configuration, C credential, IMemoryCache m
             Container cosmosContainer = await this.GetContainer(database, container, cancellationToken).ConfigureAwait(false);
             ItemResponse<I> response = await cosmosContainer.ReadItemAsync<I>(itemId, new PartitionKey(partitionKey), cancellationToken: cancellationToken).ConfigureAwait(false);
             return response.Resource;
-        });
+        }, cancellationToken);
     }
 
     public async Task<IEnumerable<I>> GetItemsAsync<I>(string database, string container, string query, CancellationToken cancellationToken) where I : ICosmosEntity {
@@ -60,7 +60,7 @@ internal class AzureCosmosDb<T, C>(T configuration, C credential, IMemoryCache m
                 results.AddRange(response);
             }
             return (IEnumerable<I>)results;
-        });
+        }, cancellationToken);
     }
 
     public async Task<I> AddItemAsync<I>(string database, string container, I item, CancellationToken cancellationToken) where I : ICosmosEntity {
@@ -71,7 +71,7 @@ internal class AzureCosmosDb<T, C>(T configuration, C credential, IMemoryCache m
             Container cosmosContainer = await this.GetContainer(database, container, cancellationToken).ConfigureAwait(false);
             ItemResponse<I> response = await cosmosContainer.CreateItemAsync<I>(item, new PartitionKey(item.PartitionKey), cancellationToken: cancellationToken).ConfigureAwait(false);
             return response.Resource;
-        });
+        }, cancellationToken);
     }
 
     public async Task<I> UpdateItemAsync<I>(string database, string container, I item, CancellationToken cancellationToken) where I : ICosmosEntity {
@@ -81,7 +81,7 @@ internal class AzureCosmosDb<T, C>(T configuration, C credential, IMemoryCache m
             Container cosmosContainer = await this.GetContainer(database, container, cancellationToken).ConfigureAwait(false);
             ItemResponse<I> response = await cosmosContainer.UpsertItemAsync<I>(item, new PartitionKey(item.PartitionKey), cancellationToken: cancellationToken).ConfigureAwait(false);
             return response.Resource;
-        });
+        }, cancellationToken);
     }
 
     public async Task DeleteItemAsync<I>(string database, string container, I item, CancellationToken cancellationToken) where I : ICosmosEntity {
@@ -90,7 +90,7 @@ internal class AzureCosmosDb<T, C>(T configuration, C credential, IMemoryCache m
         await this.LoggedOperationAsync($"Cosmos DeleteItem {database}/{container}", async () => {
             Container cosmosContainer = await this.GetContainer(database, container, cancellationToken).ConfigureAwait(false);
             await cosmosContainer.DeleteItemAsync<I>(item.Id, new PartitionKey(item.PartitionKey), cancellationToken: cancellationToken).ConfigureAwait(false);
-        });
+        }, cancellationToken);
     }
 
     public void Dispose() {

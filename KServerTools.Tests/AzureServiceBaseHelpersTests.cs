@@ -56,16 +56,16 @@ public class AzureServiceBaseHelpersTests {
     }
 
     [Fact]
-    public async Task LoggedOperationAsync_Void_CancellationLogsWarn() {
+    public async Task LoggedOperationAsync_Void_CallerCancellation_LogsCallerSource() {
         var logger = new Mock<IJsonLogger>();
         using var cts = new CancellationTokenSource();
         cts.Cancel();
 
         await Assert.ThrowsAsync<OperationCanceledException>(
-            () => AzureServiceBaseHelpers.LoggedOperationAsync(logger.Object, "cancelled-upload", () => { cts.Token.ThrowIfCancellationRequested(); return Task.CompletedTask; }));
+            () => AzureServiceBaseHelpers.LoggedOperationAsync(logger.Object, "cancelled-upload", () => { cts.Token.ThrowIfCancellationRequested(); return Task.CompletedTask; }, cts.Token));
 
         logger.Verify(l => l.Warn(
-            It.Is<string>(s => s.Contains("Cancelled")),
+            It.Is<string>(s => s.Contains("Cancelled (caller)")),
             It.IsAny<Exception>(), It.IsAny<long?>(),
             It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
         logger.Verify(l => l.Error(
@@ -74,15 +74,18 @@ public class AzureServiceBaseHelpersTests {
     }
 
     [Fact]
-    public async Task LoggedOperationAsync_Generic_CancellationLogsWarn() {
+    public async Task LoggedOperationAsync_Generic_ServerCancellation_LogsServerSource() {
         var logger = new Mock<IJsonLogger>();
+        using var callerCts = new CancellationTokenSource();
+        using var serverCts = new CancellationTokenSource();
+        serverCts.Cancel();
 
-        await Assert.ThrowsAsync<TaskCanceledException>(
-            () => AzureServiceBaseHelpers.LoggedOperationAsync<int>(logger.Object, "cancelled-query",
-                () => throw new TaskCanceledException("cancelled")));
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => AzureServiceBaseHelpers.LoggedOperationAsync<int>(logger.Object, "server-cancel",
+                () => { serverCts.Token.ThrowIfCancellationRequested(); return Task.FromResult(0); }, callerCts.Token));
 
         logger.Verify(l => l.Warn(
-            It.Is<string>(s => s.Contains("Cancelled")),
+            It.Is<string>(s => s.Contains("Cancelled (server)")),
             It.IsAny<Exception>(), It.IsAny<long?>(),
             It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
     }

@@ -11,11 +11,11 @@ public class AzureServiceBaseTests {
         public TestService(TestConfig config, IMemoryCache cache, string credentialId, IJsonLogger? logger = null)
             : base(config, cache, credentialId, logger) { }
 
-        public new Task<T> LoggedOperationAsync<T>(string operationName, Func<Task<T>> operation) =>
-            base.LoggedOperationAsync(operationName, operation);
+        public new Task<T> LoggedOperationAsync<T>(string operationName, Func<Task<T>> operation, CancellationToken cancellationToken = default) =>
+            base.LoggedOperationAsync(operationName, operation, cancellationToken);
 
-        public new Task LoggedOperationAsync(string operationName, Func<Task> operation) =>
-            base.LoggedOperationAsync(operationName, operation);
+        public new Task LoggedOperationAsync(string operationName, Func<Task> operation, CancellationToken cancellationToken = default) =>
+            base.LoggedOperationAsync(operationName, operation, cancellationToken);
 
         public new Task<T> GetOrCreateCachedAsync<T>(string key, Func<Task<T>> factory, MemoryCacheEntryOptions? options = null) where T : notnull =>
             base.GetOrCreateCachedAsync(key, factory, options);
@@ -218,7 +218,7 @@ public class AzureServiceBaseTests {
     // --- Cancellation handling ---
 
     [Fact]
-    public async Task LoggedOperationAsync_CancellationLogsWarnNotError() {
+    public async Task LoggedOperationAsync_CallerCancellation_LogsCallerSource() {
         var logger = new Mock<IJsonLogger>();
         using var cache = new MemoryCache(new MemoryCacheOptions());
         var service = new TestService(new TestConfig(), cache, "cred1", logger.Object);
@@ -226,10 +226,10 @@ public class AzureServiceBaseTests {
         cts.Cancel();
 
         await Assert.ThrowsAsync<OperationCanceledException>(
-            () => service.LoggedOperationAsync<int>("cancelled-op", () => { cts.Token.ThrowIfCancellationRequested(); return Task.FromResult(0); }));
+            () => service.LoggedOperationAsync<int>("cancelled-op", () => { cts.Token.ThrowIfCancellationRequested(); return Task.FromResult(0); }, cts.Token));
 
         logger.Verify(l => l.Warn(
-            It.Is<string>(s => s.Contains("Cancelled") && s.Contains("cancelled-op")),
+            It.Is<string>(s => s.Contains("Cancelled (caller)") && s.Contains("cancelled-op")),
             It.IsAny<Exception>(), It.IsAny<long?>(),
             It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
         logger.Verify(l => l.Error(
@@ -238,7 +238,7 @@ public class AzureServiceBaseTests {
     }
 
     [Fact]
-    public async Task LoggedOperationAsync_Void_CancellationLogsWarnNotError() {
+    public async Task LoggedOperationAsync_Void_CallerCancellation_LogsCallerSource() {
         var logger = new Mock<IJsonLogger>();
         using var cache = new MemoryCache(new MemoryCacheOptions());
         var service = new TestService(new TestConfig(), cache, "cred1", logger.Object);
@@ -246,30 +246,68 @@ public class AzureServiceBaseTests {
         cts.Cancel();
 
         await Assert.ThrowsAsync<OperationCanceledException>(
-            () => service.LoggedOperationAsync("void-cancel", () => { cts.Token.ThrowIfCancellationRequested(); return Task.CompletedTask; }));
+            () => service.LoggedOperationAsync("void-cancel", () => { cts.Token.ThrowIfCancellationRequested(); return Task.CompletedTask; }, cts.Token));
 
         logger.Verify(l => l.Warn(
-            It.Is<string>(s => s.Contains("Cancelled")),
+            It.Is<string>(s => s.Contains("Cancelled (caller)")),
             It.IsAny<Exception>(), It.IsAny<long?>(),
             It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
-        logger.Verify(l => l.Error(
-            It.IsAny<string>(), It.IsAny<Exception>(), It.IsAny<long?>(),
-            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
     }
 
     [Fact]
-    public async Task LoggedOperationAsync_TaskCancelledAlsoLogsWarn() {
+    public async Task LoggedOperationAsync_ServerCancellation_LogsServerSource() {
+        var logger = new Mock<IJsonLogger>();
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new TestService(new TestConfig(), cache, "cred1", logger.Object);
+        // Caller token is NOT cancelled — the exception comes from an internal/server source
+        using var callerCts = new CancellationTokenSource();
+        using var serverCts = new CancellationTokenSource();
+        serverCts.Cancel();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => service.LoggedOperationAsync<int>("server-cancel", () => { serverCts.Token.ThrowIfCancellationRequested(); return Task.FromResult(0); }, callerCts.Token));
+
+        logger.Verify(l => l.Warn(
+            It.Is<string>(s => s.Contains("Cancelled (server)")),
+            It.IsAny<Exception>(), It.IsAny<long?>(),
+            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task LoggedOperationAsync_NoCancellationToken_LogsUnknownSource() {
         var logger = new Mock<IJsonLogger>();
         using var cache = new MemoryCache(new MemoryCacheOptions());
         var service = new TestService(new TestConfig(), cache, "cred1", logger.Object);
 
         await Assert.ThrowsAsync<TaskCanceledException>(
-            () => service.LoggedOperationAsync<int>("task-cancel", () => throw new TaskCanceledException("cancelled")));
+            () => service.LoggedOperationAsync<int>("no-token", () => throw new TaskCanceledException("cancelled")));
 
-        // TaskCanceledException inherits from OperationCanceledException
         logger.Verify(l => l.Warn(
-            It.Is<string>(s => s.Contains("Cancelled")),
+            It.Is<string>(s => s.Contains("Cancelled (unknown)")),
             It.IsAny<Exception>(), It.IsAny<long?>(),
             It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
+    }
+
+    [Fact]
+    public void GetCancellationSource_CallerTokenCancelled_ReturnsCaller() {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+        var ex = new OperationCanceledException(cts.Token);
+        Assert.Equal("caller", AzureServiceBase<TestConfig>.GetCancellationSource(ex, cts.Token));
+    }
+
+    [Fact]
+    public void GetCancellationSource_DifferentTokenCancelled_ReturnsServer() {
+        using var callerCts = new CancellationTokenSource();
+        using var serverCts = new CancellationTokenSource();
+        serverCts.Cancel();
+        var ex = new OperationCanceledException(serverCts.Token);
+        Assert.Equal("server", AzureServiceBase<TestConfig>.GetCancellationSource(ex, callerCts.Token));
+    }
+
+    [Fact]
+    public void GetCancellationSource_NoTokenInfo_ReturnsUnknown() {
+        var ex = new OperationCanceledException("cancelled");
+        Assert.Equal("unknown", AzureServiceBase<TestConfig>.GetCancellationSource(ex, CancellationToken.None));
     }
 }

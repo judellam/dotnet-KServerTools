@@ -20,8 +20,9 @@ internal abstract class AzureServiceBase<TConfig>(TConfig config, IMemoryCache m
     /// <summary>
     /// Executes an async operation with Stopwatch-based latency logging.
     /// Logs success on completion, logs error and rethrows on failure.
+    /// Cancellations are logged as warnings with source attribution (caller vs server).
     /// </summary>
-    protected async Task<T> LoggedOperationAsync<T>(string operationName, Func<Task<T>> operation) {
+    protected async Task<T> LoggedOperationAsync<T>(string operationName, Func<Task<T>> operation, CancellationToken cancellationToken = default) {
         Stopwatch stopwatch = Stopwatch.StartNew();
         try {
             T result = await operation().ConfigureAwait(false);
@@ -30,7 +31,8 @@ internal abstract class AzureServiceBase<TConfig>(TConfig config, IMemoryCache m
             return result;
         } catch (OperationCanceledException ex) {
             stopwatch.Stop();
-            this.logger?.Warn($"Cancelled: {operationName}", ex, stopwatch.ElapsedMilliseconds);
+            string source = GetCancellationSource(ex, cancellationToken);
+            this.logger?.Warn($"Cancelled ({source}): {operationName}", ex, stopwatch.ElapsedMilliseconds);
             throw;
         } catch (Exception ex) {
             stopwatch.Stop();
@@ -42,7 +44,7 @@ internal abstract class AzureServiceBase<TConfig>(TConfig config, IMemoryCache m
     /// <summary>
     /// Executes an async void operation with Stopwatch-based latency logging.
     /// </summary>
-    protected async Task LoggedOperationAsync(string operationName, Func<Task> operation) {
+    protected async Task LoggedOperationAsync(string operationName, Func<Task> operation, CancellationToken cancellationToken = default) {
         Stopwatch stopwatch = Stopwatch.StartNew();
         try {
             await operation().ConfigureAwait(false);
@@ -50,7 +52,8 @@ internal abstract class AzureServiceBase<TConfig>(TConfig config, IMemoryCache m
             this.logger?.Info(operationName, stopwatch.ElapsedMilliseconds);
         } catch (OperationCanceledException ex) {
             stopwatch.Stop();
-            this.logger?.Warn($"Cancelled: {operationName}", ex, stopwatch.ElapsedMilliseconds);
+            string source = GetCancellationSource(ex, cancellationToken);
+            this.logger?.Warn($"Cancelled ({source}): {operationName}", ex, stopwatch.ElapsedMilliseconds);
             throw;
         } catch (Exception ex) {
             stopwatch.Stop();
@@ -81,13 +84,27 @@ internal abstract class AzureServiceBase<TConfig>(TConfig config, IMemoryCache m
             }
         }
     }
+
+    /// <summary>
+    /// Determines whether a cancellation was initiated by the caller (e.g., client disconnect,
+    /// HttpContext.RequestAborted) or by the server (e.g., internal timeout, shutdown).
+    /// </summary>
+    internal static string GetCancellationSource(OperationCanceledException ex, CancellationToken callerToken) {
+        if (callerToken.IsCancellationRequested) {
+            return "caller";
+        }
+        if (ex.CancellationToken != CancellationToken.None && ex.CancellationToken.IsCancellationRequested) {
+            return "server";
+        }
+        return "unknown";
+    }
 }
 
 /// <summary>
 /// Static helpers for services that don't inherit AzureServiceBase but need logged operations.
 /// </summary>
 internal static class AzureServiceBaseHelpers {
-    internal static async Task LoggedOperationAsync(IJsonLogger logger, string operationName, Func<Task> operation) {
+    internal static async Task LoggedOperationAsync(IJsonLogger logger, string operationName, Func<Task> operation, CancellationToken cancellationToken = default) {
         Stopwatch stopwatch = Stopwatch.StartNew();
         try {
             await operation().ConfigureAwait(false);
@@ -95,7 +112,8 @@ internal static class AzureServiceBaseHelpers {
             logger.Info(operationName, stopwatch.ElapsedMilliseconds);
         } catch (OperationCanceledException ex) {
             stopwatch.Stop();
-            logger.Warn($"Cancelled: {operationName}", ex, stopwatch.ElapsedMilliseconds);
+            string source = AzureServiceBase<object>.GetCancellationSource(ex, cancellationToken);
+            logger.Warn($"Cancelled ({source}): {operationName}", ex, stopwatch.ElapsedMilliseconds);
             throw;
         } catch (Exception ex) {
             stopwatch.Stop();
@@ -104,7 +122,7 @@ internal static class AzureServiceBaseHelpers {
         }
     }
 
-    internal static async Task<T> LoggedOperationAsync<T>(IJsonLogger logger, string operationName, Func<Task<T>> operation) {
+    internal static async Task<T> LoggedOperationAsync<T>(IJsonLogger logger, string operationName, Func<Task<T>> operation, CancellationToken cancellationToken = default) {
         Stopwatch stopwatch = Stopwatch.StartNew();
         try {
             T result = await operation().ConfigureAwait(false);
@@ -113,7 +131,8 @@ internal static class AzureServiceBaseHelpers {
             return result;
         } catch (OperationCanceledException ex) {
             stopwatch.Stop();
-            logger.Warn($"Cancelled: {operationName}", ex, stopwatch.ElapsedMilliseconds);
+            string source = AzureServiceBase<object>.GetCancellationSource(ex, cancellationToken);
+            logger.Warn($"Cancelled ({source}): {operationName}", ex, stopwatch.ElapsedMilliseconds);
             throw;
         } catch (Exception ex) {
             stopwatch.Stop();
