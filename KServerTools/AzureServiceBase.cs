@@ -28,6 +28,10 @@ internal abstract class AzureServiceBase<TConfig>(TConfig config, IMemoryCache m
             stopwatch.Stop();
             this.logger?.Info(operationName, stopwatch.ElapsedMilliseconds);
             return result;
+        } catch (OperationCanceledException ex) {
+            stopwatch.Stop();
+            this.logger?.Warn($"Cancelled: {operationName}", ex, stopwatch.ElapsedMilliseconds);
+            throw;
         } catch (Exception ex) {
             stopwatch.Stop();
             this.logger?.Error($"Failed: {operationName}", ex, stopwatch.ElapsedMilliseconds);
@@ -44,6 +48,10 @@ internal abstract class AzureServiceBase<TConfig>(TConfig config, IMemoryCache m
             await operation().ConfigureAwait(false);
             stopwatch.Stop();
             this.logger?.Info(operationName, stopwatch.ElapsedMilliseconds);
+        } catch (OperationCanceledException ex) {
+            stopwatch.Stop();
+            this.logger?.Warn($"Cancelled: {operationName}", ex, stopwatch.ElapsedMilliseconds);
+            throw;
         } catch (Exception ex) {
             stopwatch.Stop();
             this.logger?.Error($"Failed: {operationName}", ex, stopwatch.ElapsedMilliseconds);
@@ -85,6 +93,10 @@ internal static class AzureServiceBaseHelpers {
             await operation().ConfigureAwait(false);
             stopwatch.Stop();
             logger.Info(operationName, stopwatch.ElapsedMilliseconds);
+        } catch (OperationCanceledException ex) {
+            stopwatch.Stop();
+            logger.Warn($"Cancelled: {operationName}", ex, stopwatch.ElapsedMilliseconds);
+            throw;
         } catch (Exception ex) {
             stopwatch.Stop();
             logger.Error($"Failed: {operationName}", ex, stopwatch.ElapsedMilliseconds);
@@ -99,6 +111,10 @@ internal static class AzureServiceBaseHelpers {
             stopwatch.Stop();
             logger.Info(operationName, stopwatch.ElapsedMilliseconds);
             return result;
+        } catch (OperationCanceledException ex) {
+            stopwatch.Stop();
+            logger.Warn($"Cancelled: {operationName}", ex, stopwatch.ElapsedMilliseconds);
+            throw;
         } catch (Exception ex) {
             stopwatch.Stop();
             logger.Error($"Failed: {operationName}", ex, stopwatch.ElapsedMilliseconds);

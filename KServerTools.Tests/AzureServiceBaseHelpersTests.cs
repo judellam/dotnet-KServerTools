@@ -54,4 +54,36 @@ public class AzureServiceBaseHelpersTests {
             expectedException,
             It.IsAny<long?>(), It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
     }
+
+    [Fact]
+    public async Task LoggedOperationAsync_Void_CancellationLogsWarn() {
+        var logger = new Mock<IJsonLogger>();
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => AzureServiceBaseHelpers.LoggedOperationAsync(logger.Object, "cancelled-upload", () => { cts.Token.ThrowIfCancellationRequested(); return Task.CompletedTask; }));
+
+        logger.Verify(l => l.Warn(
+            It.Is<string>(s => s.Contains("Cancelled")),
+            It.IsAny<Exception>(), It.IsAny<long?>(),
+            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
+        logger.Verify(l => l.Error(
+            It.IsAny<string>(), It.IsAny<Exception>(), It.IsAny<long?>(),
+            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task LoggedOperationAsync_Generic_CancellationLogsWarn() {
+        var logger = new Mock<IJsonLogger>();
+
+        await Assert.ThrowsAsync<TaskCanceledException>(
+            () => AzureServiceBaseHelpers.LoggedOperationAsync<int>(logger.Object, "cancelled-query",
+                () => throw new TaskCanceledException("cancelled")));
+
+        logger.Verify(l => l.Warn(
+            It.Is<string>(s => s.Contains("Cancelled")),
+            It.IsAny<Exception>(), It.IsAny<long?>(),
+            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
+    }
 }

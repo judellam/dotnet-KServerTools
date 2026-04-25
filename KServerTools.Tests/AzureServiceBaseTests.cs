@@ -214,4 +214,62 @@ public class AzureServiceBaseTests {
     public void VerifyArgs_NoArgs_DoesNotThrow() {
         TestService.VerifyArgs();
     }
+
+    // --- Cancellation handling ---
+
+    [Fact]
+    public async Task LoggedOperationAsync_CancellationLogsWarnNotError() {
+        var logger = new Mock<IJsonLogger>();
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new TestService(new TestConfig(), cache, "cred1", logger.Object);
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => service.LoggedOperationAsync<int>("cancelled-op", () => { cts.Token.ThrowIfCancellationRequested(); return Task.FromResult(0); }));
+
+        logger.Verify(l => l.Warn(
+            It.Is<string>(s => s.Contains("Cancelled") && s.Contains("cancelled-op")),
+            It.IsAny<Exception>(), It.IsAny<long?>(),
+            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
+        logger.Verify(l => l.Error(
+            It.IsAny<string>(), It.IsAny<Exception>(), It.IsAny<long?>(),
+            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task LoggedOperationAsync_Void_CancellationLogsWarnNotError() {
+        var logger = new Mock<IJsonLogger>();
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new TestService(new TestConfig(), cache, "cred1", logger.Object);
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAsync<OperationCanceledException>(
+            () => service.LoggedOperationAsync("void-cancel", () => { cts.Token.ThrowIfCancellationRequested(); return Task.CompletedTask; }));
+
+        logger.Verify(l => l.Warn(
+            It.Is<string>(s => s.Contains("Cancelled")),
+            It.IsAny<Exception>(), It.IsAny<long?>(),
+            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
+        logger.Verify(l => l.Error(
+            It.IsAny<string>(), It.IsAny<Exception>(), It.IsAny<long?>(),
+            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Fact]
+    public async Task LoggedOperationAsync_TaskCancelledAlsoLogsWarn() {
+        var logger = new Mock<IJsonLogger>();
+        using var cache = new MemoryCache(new MemoryCacheOptions());
+        var service = new TestService(new TestConfig(), cache, "cred1", logger.Object);
+
+        await Assert.ThrowsAsync<TaskCanceledException>(
+            () => service.LoggedOperationAsync<int>("task-cancel", () => throw new TaskCanceledException("cancelled")));
+
+        // TaskCanceledException inherits from OperationCanceledException
+        logger.Verify(l => l.Warn(
+            It.Is<string>(s => s.Contains("Cancelled")),
+            It.IsAny<Exception>(), It.IsAny<long?>(),
+            It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
+    }
 }

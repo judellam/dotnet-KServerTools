@@ -27,39 +27,45 @@ internal class SqlServerService<T, C>(T config, IJsonLogger logger, C credential
     private readonly IJsonLogger logger = logger;
     private readonly C? credential = credential;
 
-    public async Task<int> NonQueryAsync(string query, IList<SqlParameter>? parameters, CancellationToken cancellationToken) {
+    public Task<int> NonQueryAsync(string query, IList<SqlParameter>? parameters, CancellationToken cancellationToken) {
         InternalServerErrorException.ThrowIfArgumentIsNull(query, nameof(query));
         cancellationToken.ThrowIfCancellationRequested();
 
-        using SqlConnection connection = await this.GetOrCreateConnection(cancellationToken);
-        using SqlCommand command = new(query, connection);
-        if (parameters is not null) {
-            command.Parameters.AddRange([.. parameters]);
-        }
+        return AzureServiceBaseHelpers.LoggedOperationAsync(this.logger, $"SQL NonQuery on {this.config.Database}", async () => {
+            using SqlConnection connection = await this.GetOrCreateConnection(cancellationToken);
+            using SqlCommand command = new(query, connection);
+            if (parameters is not null) {
+                command.Parameters.AddRange([.. parameters]);
+            }
 
-        return await command.ExecuteNonQueryAsync(cancellationToken);
+            return await command.ExecuteNonQueryAsync(cancellationToken);
+        });
     }
 
     /// <summary>
     /// Execute a query and return a SqlDataReader. The data reader must be disposed of.
     /// </summary>
-    public async Task<M> QueryAsync<M>(string query, IList<SqlParameter>? parameters, Func<SqlDataReader, Task<M>> onRead, CancellationToken cancellationToken) {
+    public Task<M> QueryAsync<M>(string query, IList<SqlParameter>? parameters, Func<SqlDataReader, Task<M>> onRead, CancellationToken cancellationToken) {
         InternalServerErrorException.ThrowIfArgumentIsNull(query, nameof(query));
         cancellationToken.ThrowIfCancellationRequested();
 
-        using SqlConnection connection = await this.GetOrCreateConnection(cancellationToken);
-        using SqlCommand command = new(query, connection);
-        if (parameters is not null) {
-            command.Parameters.AddRange([.. parameters]);
-        }
+        return AzureServiceBaseHelpers.LoggedOperationAsync(this.logger, $"SQL Query on {this.config.Database}", async () => {
+            using SqlConnection connection = await this.GetOrCreateConnection(cancellationToken);
+            using SqlCommand command = new(query, connection);
+            if (parameters is not null) {
+                command.Parameters.AddRange([.. parameters]);
+            }
 
-        using SqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
-        return await onRead(reader);
+            using SqlDataReader reader = await command.ExecuteReaderAsync(cancellationToken);
+            return await onRead(reader);
+        });
     }
 
     public virtual async Task<SqlConnection> GetOrCreateConnection(CancellationToken cancellationToken) {
         if (!string.IsNullOrEmpty(this.config.ConnectionStringData)) {
-            return new SqlConnection(await this.config.GetConnectionString(cancellationToken));
+            var connStringConnection = new SqlConnection(await this.config.GetConnectionString(cancellationToken));
+            await connStringConnection.OpenAsync(cancellationToken).ConfigureAwait(false);
+            return connStringConnection;
         }
 
         InternalServerErrorException.ThrowIfArgumentIsNull(

@@ -76,17 +76,24 @@ internal class JsonStorageLogger<T, C> : IJsonLogger where T : AzureStorageServi
 
         try {
             StringBuilder sb = new();
-            string events = string.Empty;
             int count = 0;
-            while (this.logQueue.TryDequeue(out events!) && count < MaxLogQueueSize) {
+            while (this.logQueue.TryDequeue(out string? events) && count < MaxLogQueueSize) {
                 sb.AppendLine(events);
+                count++;
             }
             using MemoryStream stream = new(Encoding.UTF8.GetBytes(sb.ToString()));
 
-            await this.azureStorageService.AppendAsync(this.azureStorageService.Config.ContainerName, blobName, stream, CancellationToken.None)
-                .ConfigureAwait(false);
-        } catch (Exception ex){ 
-            Console.WriteLine($"Failed to flush logs to storage: {ex.Message}, {ex.StackTrace}");
+            try {
+                await this.azureStorageService.AppendAsync(this.azureStorageService.Config.ContainerName, blobName, stream, CancellationToken.None)
+                    .ConfigureAwait(false);
+            } catch (Exception) {
+                // Single retry with fresh stream position
+                stream.Position = 0;
+                await this.azureStorageService.AppendAsync(this.azureStorageService.Config.ContainerName, blobName, stream, CancellationToken.None)
+                    .ConfigureAwait(false);
+            }
+        } catch (Exception ex) {
+            Console.WriteLine($"Failed to flush {this.logQueue.Count} log events to storage after retry: {ex.Message}");
         } finally {
             this.semaphore.Release();
         }

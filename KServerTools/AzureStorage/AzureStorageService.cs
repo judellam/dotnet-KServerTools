@@ -31,8 +31,24 @@ internal class AzureStorageService<T, C>(T config, C credential, IJsonLogger log
             $"Checked existence of blob {blobName} in container {containerName}",
             () => this.service.BlobExistsAsync(containerName, blobName, cancellationToken));
 
-    public IAsyncEnumerable<string> ListBlobsAsync(string containerName, string? prefix, CancellationToken cancellationToken) =>
-        this.service.ListBlobsAsync(containerName, prefix, cancellationToken);
+    public async IAsyncEnumerable<string> ListBlobsAsync(string containerName, string? prefix, [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken) {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        int count = 0;
+        Exception? caught = null;
+        try {
+            await foreach (var name in this.service.ListBlobsAsync(containerName, prefix, cancellationToken).ConfigureAwait(false)) {
+                count++;
+                yield return name;
+            }
+        } finally {
+            sw.Stop();
+            if (cancellationToken.IsCancellationRequested) {
+                this.logger.Warn($"Cancelled: List blobs in {containerName} (prefix: {prefix}), yielded {count} items", null, sw.ElapsedMilliseconds);
+            } else {
+                this.logger.Info($"Listed {count} blobs in {containerName} (prefix: {prefix})", sw.ElapsedMilliseconds);
+            }
+        }
+    }
 
     public Task<IReadOnlyList<string>> ListBlobsToListAsync(string containerName, string? prefix, CancellationToken cancellationToken) =>
         AzureServiceBaseHelpers.LoggedOperationAsync(this.logger,
