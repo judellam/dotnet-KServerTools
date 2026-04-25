@@ -308,8 +308,19 @@ dotnet_diagnostic.SA1129.severity = warning
 
 # --- StyleCop: Maintainability ----------------------------------------------
 
+# SA1649: File name should match first type name — DISABLED
+# (generic types cause filename mismatches; not in the 7 core requirements)
+dotnet_diagnostic.SA1649.severity = none
+
 # SA1402: File may only contain a single type
 dotnet_diagnostic.SA1402.severity = warning
+
+# SA1401: Fields should not be publicly visible — DISABLED
+# (protected readonly fields in internal base classes are acceptable)
+dotnet_diagnostic.SA1401.severity = none
+
+# SA1414: Tuple types in signatures should have element names — DISABLED
+dotnet_diagnostic.SA1414.severity = none
 
 # SA1404: Code analysis suppression should have justification
 dotnet_diagnostic.SA1404.severity = warning

@@ -6,37 +6,6 @@ using Moq;
 using Moq.Protected;
 
 public class HttpClientBaseTests {
-    private class TestHttpClient : HttpClientBase {
-        public TestHttpClient(IHttpClientFactory factory, IJsonLogger logger) : base(factory, logger) { }
-        public override string GetClientName() => "TestClient";
-
-        public Task<HttpResponseMessage> TestSend(string path, HttpMethod method,
-            IList<(string key, string value)>? headers, string body, CancellationToken ct) =>
-            this.Send(path, method, headers, body, ct);
-
-        public Task<HttpResponseMessage> TestPost(string path,
-            IList<(string key, string value)>? headers, string body, CancellationToken ct) =>
-            this.Post(path, headers, body, ct);
-    }
-
-    private static (TestHttpClient client, Mock<IJsonLogger> logger, Mock<HttpMessageHandler> handler) CreateTestClient(
-        HttpStatusCode responseCode = HttpStatusCode.OK, string baseAddress = "https://api.example.com/") {
-        var logger = new Mock<IJsonLogger>();
-        var handler = new Mock<HttpMessageHandler>();
-        handler.Protected()
-            .Setup<Task<HttpResponseMessage>>("SendAsync",
-                ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
-            .ReturnsAsync(new HttpResponseMessage(responseCode) {
-                Content = new StringContent("{}")
-            });
-
-        var httpClient = new HttpClient(handler.Object) { BaseAddress = new Uri(baseAddress) };
-        var factory = new Mock<IHttpClientFactory>();
-        factory.Setup(f => f.CreateClient("TestClient")).Returns(httpClient);
-
-        return (new TestHttpClient(factory.Object, logger.Object), logger, handler);
-    }
-
     [Fact]
     public async Task Send_SuccessfulRequest_LogsPathWithoutQueryString() {
         // Create client whose base URL has query params (simulating SAS tokens)
@@ -185,5 +154,36 @@ public class HttpClientBaseTests {
         await client.TestSend("/api/missing", HttpMethod.Get, null, "{}", CancellationToken.None);
 
         Assert.Contains("NotFound", loggedMessage);
+    }
+
+    private static (TestHttpClient client, Mock<IJsonLogger> logger, Mock<HttpMessageHandler> handler) CreateTestClient(
+        HttpStatusCode responseCode = HttpStatusCode.OK, string baseAddress = "https://api.example.com/") {
+        var logger = new Mock<IJsonLogger>();
+        var handler = new Mock<HttpMessageHandler>();
+        handler.Protected()
+            .Setup<Task<HttpResponseMessage>>("SendAsync",
+                ItExpr.IsAny<HttpRequestMessage>(), ItExpr.IsAny<CancellationToken>())
+            .ReturnsAsync(new HttpResponseMessage(responseCode) {
+                Content = new StringContent("{}")
+            });
+
+        var httpClient = new HttpClient(handler.Object) { BaseAddress = new Uri(baseAddress) };
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient("TestClient")).Returns(httpClient);
+
+        return (new TestHttpClient(factory.Object, logger.Object), logger, handler);
+    }
+
+    private class TestHttpClient : HttpClientBase {
+        public TestHttpClient(IHttpClientFactory factory, IJsonLogger logger) : base(factory, logger) { }
+        public override string GetClientName() => "TestClient";
+
+        public Task<HttpResponseMessage> TestSend(string path, HttpMethod method,
+            IList<(string key, string value)>? headers, string body, CancellationToken ct) =>
+            this.Send(path, method, headers!, body, ct);
+
+        public Task<HttpResponseMessage> TestPost(string path,
+            IList<(string key, string value)>? headers, string body, CancellationToken ct) =>
+            this.Post(path, headers!, body, ct);
     }
 }

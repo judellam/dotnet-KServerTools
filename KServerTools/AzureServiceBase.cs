@@ -13,12 +13,26 @@ using Microsoft.Extensions.Caching.Memory;
 /// <param name="credentialId">An identity string used to namespace cache keys across credential contexts.</param>
 /// <param name="logger">An optional logger for structured JSON output.</param>
 internal abstract class AzureServiceBase<TConfig>(TConfig config, IMemoryCache memoryCache, string credentialId, IJsonLogger? logger = null) where TConfig : class {
+    /// <summary>
+    /// Default cache options with a 50-minute sliding expiration.
+    /// </summary>
     protected static readonly MemoryCacheEntryOptions DefaultCacheOptions = new() {
         SlidingExpiration = TimeSpan.FromMinutes(50)
     };
 
+    /// <summary>
+    /// The service configuration instance.
+    /// </summary>
     protected readonly TConfig config = config;
+
+    /// <summary>
+    /// The shared memory cache for caching service clients and data.
+    /// </summary>
     protected readonly IMemoryCache memoryCache = memoryCache;
+
+    /// <summary>
+    /// An optional logger for structured JSON output.
+    /// </summary>
     protected readonly IJsonLogger? logger = logger;
     private readonly string credentialId = credentialId;
 

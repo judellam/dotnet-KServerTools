@@ -11,6 +11,13 @@ namespace KServerTools.Common;
 ///   }.
 /// </remarks>
 public interface IAzureKeyVaultConfiguration {
+    /// <summary>
+    /// Gets or sets the URI of the Azure Key Vault instance.
+    /// </summary>
     string Uri { get; set; }
+
+    /// <summary>
+    /// Gets or sets the duration in seconds for which secrets are cached.
+    /// </summary>
     int CacheDurationInSeconds { get; set; }
 }

@@ -144,8 +144,10 @@ public class DependencyHelperTests {
         var services = CreateServicesWithConfig();
         bool actionCalled = false;
 
-        services.AddKServerTools(kst => { actionCalled = true;
-            kst.AddCommon(); });
+        services.AddKServerTools(kst => {
+            actionCalled = true;
+            kst.AddCommon();
+        });
 
         Assert.True(actionCalled);
     }

@@ -114,15 +114,6 @@ public class KSTBuilderTests {
         Assert.NotNull(provider.GetService<ISecretResolver>());
     }
 
-    private class TestKeyVaultConfig : IAzureKeyVaultConfiguration {
-        public string Uri { get; set; } = "https://test.vault.azure.net/";
-        public int CacheDurationInSeconds { get; set; } = 300;
-    }
-
-    private class MockRequestContextAccessor : IRequestContextAccessor {
-        public IRequestContext? GetRequestContext() => null;
-    }
-
     // --- Additional builder coverage ---
 
     [Fact]
@@ -234,6 +225,15 @@ public class KSTBuilderTests {
         );
 
         Assert.Contains(services, sd => sd.ServiceType == typeof(IAzureKeyVaultService<TestKeyVaultConfig>));
+    }
+
+    private class TestKeyVaultConfig : IAzureKeyVaultConfiguration {
+        public string Uri { get; set; } = "https://test.vault.azure.net/";
+        public int CacheDurationInSeconds { get; set; } = 300;
+    }
+
+    private class MockRequestContextAccessor : IRequestContextAccessor {
+        public IRequestContext? GetRequestContext() => null;
     }
 
     private class TestStorageConfig : IAzureStorageServiceConfig {

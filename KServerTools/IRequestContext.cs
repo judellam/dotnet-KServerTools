@@ -19,6 +19,6 @@ public interface IRequestContext {
     /// <summary>
     /// Called for setup of the request context.
     /// </summary>
-    /// <param name="context"></param>
+    /// <param name="context">The HTTP context for the current request.</param>
     void Setup(HttpContext context);
 }

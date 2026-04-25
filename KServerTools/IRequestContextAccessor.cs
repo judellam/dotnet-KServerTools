@@ -7,6 +7,6 @@ public interface IRequestContextAccessor {
     /// <summary>
     /// Retrieves the request context.
     /// </summary>
-    /// <returns></returns>
+    /// <returns>The current <see cref="IRequestContext"/>, or <see langword="null"/> if unavailable.</returns>
     public IRequestContext? GetRequestContext();
 }

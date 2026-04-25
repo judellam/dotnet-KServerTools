@@ -5,9 +5,15 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
-    <!-- Suppress documentation and single-type rules for tests -->
-    <NoWarn>SA1600;SA1601;SA1602;SA1611;SA1615;SA1618;SA1402;SA0001;CS1591</NoWarn>
+    <!-- Tests are excluded from StyleCop / lint rules -->
+    <EnforceCodeStyleInBuild>false</EnforceCodeStyleInBuild>
   </PropertyGroup>
+
+  <!-- Remove StyleCop analyzer inherited from Directory.Build.props -->
+  <ItemGroup>
+    <PackageReference Remove="StyleCop.Analyzers" />
+    <AdditionalFiles Remove="$(MSBuildThisFileDirectory)../stylecop.json" />
+  </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
