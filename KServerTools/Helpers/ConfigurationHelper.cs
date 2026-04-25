@@ -13,9 +13,20 @@ using Microsoft.Extensions.Configuration;
 public class ConfigurationHelper(IConfiguration configuration) {
     private readonly IConfiguration configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
 
+    /// <summary>
+    /// Attempts to retrieve a configuration section of type <typeparamref name="T"/> using the type name as the section name.
+    /// </summary>
+    /// <typeparam name="T">The configuration type to bind.</typeparam>
+    /// <returns>The bound configuration instance, or <see langword="null"/> if not found.</returns>
     public T? TryGet<T>() where T : class =>
         this.TryGet<T>(typeof(T).Name);
 
+    /// <summary>
+    /// Attempts to retrieve a configuration section of type <typeparamref name="T"/> using the specified section name.
+    /// </summary>
+    /// <typeparam name="T">The configuration type to bind.</typeparam>
+    /// <param name="sectionName">The configuration section name.</param>
+    /// <returns>The bound configuration instance, or <see langword="null"/> if not found.</returns>
     public T? TryGet<T>(string sectionName) where T : class {
         try {
             var section = this.configuration.GetSection(sectionName);

@@ -25,8 +25,9 @@ public abstract class ServicePrincipalConfiguration : IServicePrincipalConfig {
     public ServiceCredentalType CredentialType { get => ServiceCredentalType.ServicePrincipal; }
 
     /// <summary>
-    /// Get's the secret for the service principal.
+    /// Gets the secret for the service principal.
     /// </summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
+    /// <param name="cancellationToken">A token to cancel the operation.</param>
+    /// <returns>The resolved secret value.</returns>
     public abstract Task<string> GetSecret(CancellationToken cancellationToken);
 }

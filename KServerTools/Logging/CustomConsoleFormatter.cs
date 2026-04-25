@@ -14,10 +14,23 @@ using Microsoft.Extensions.Logging.Console;
 /// Requires: Microsoft.Extensions.Logging.Console.
 /// </remarks>
 public class CustomConsoleFormatter : ConsoleFormatter {
+    /// <summary>
+    /// The name of this custom formatter used for registration.
+    /// </summary>
     public const string FormatterName = "CustomFormatter";
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="CustomConsoleFormatter"/> class.
+    /// </summary>
     public CustomConsoleFormatter() : base(FormatterName) { }
 
+    /// <summary>
+    /// Writes the log entry to the specified <see cref="TextWriter"/> using a simplified format.
+    /// </summary>
+    /// <typeparam name="TState">The type of the log entry state.</typeparam>
+    /// <param name="logEntry">The log entry to format.</param>
+    /// <param name="scopeProvider">An optional scope provider.</param>
+    /// <param name="textWriter">The text writer to write the formatted log to.</param>
     public override void Write<TState>(
         in LogEntry<TState> logEntry,
         IExternalScopeProvider? scopeProvider,

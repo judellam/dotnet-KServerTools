@@ -13,7 +13,7 @@ public static class Retry {
     /// <param name="maxRetries">Maximum number of attempts (default: 3).</param>
     /// <param name="delay">Base delay in milliseconds before applying backoff (default: 1000).</param>
     /// <param name="shouldRetry">Optional predicate to determine if an exception is retryable. Defaults to retrying all exceptions.</param>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
+    /// <returns>A <see cref="Task"/> representing the asynchronous operation.</returns>
     public static async Task DoAsync(Func<Task> action, int maxRetries = 3, int delay = 1000, Func<Exception, bool>? shouldRetry = null) {
         var exceptions = new List<Exception>();
         for (var i = 0; i < maxRetries; i++) {
@@ -35,7 +35,12 @@ public static class Retry {
     /// <summary>
     /// Retries an async function with exponential backoff and jitter.
     /// </summary>
-    /// <returns><placeholder>A <see cref="Task"/> representing the asynchronous operation.</placeholder></returns>
+    /// <typeparam name="T">The return type of the function.</typeparam>
+    /// <param name="action">The function to retry.</param>
+    /// <param name="maxRetries">Maximum number of attempts (default: 3).</param>
+    /// <param name="delay">Base delay in milliseconds before applying backoff (default: 1000).</param>
+    /// <param name="shouldRetry">Optional predicate to determine if an exception is retryable. Defaults to retrying all exceptions.</param>
+    /// <returns>The result of the function.</returns>
     public static async Task<T> DoAsync<T>(Func<Task<T>> action, int maxRetries = 3, int delay = 1000, Func<Exception, bool>? shouldRetry = null) {
         var exceptions = new List<Exception>();
         for (var i = 0; i < maxRetries; i++) {
@@ -57,7 +62,9 @@ public static class Retry {
     /// Computes delay with exponential backoff and decorrelated jitter.
     /// Uses the "full jitter" algorithm: delay = random(0, baseDelay * 2^attempt).
     /// </summary>
-    /// <returns></returns>
+    /// <param name="baseDelay">The base delay in milliseconds.</param>
+    /// <param name="attempt">The current attempt number (zero-based).</param>
+    /// <returns>The computed delay in milliseconds.</returns>
     internal static int ComputeDelay(int baseDelay, int attempt) {
         var maxDelay = baseDelay * (1 << Math.Min(attempt, 8));
         lock (Jitter) {
