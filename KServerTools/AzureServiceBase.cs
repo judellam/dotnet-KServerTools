@@ -31,7 +31,7 @@ internal abstract class AzureServiceBase<TConfig>(TConfig config, IMemoryCache m
             return result;
         } catch (OperationCanceledException ex) {
             stopwatch.Stop();
-            string source = GetCancellationSource(ex, cancellationToken);
+            CancellationSource source = GetCancellationSource(ex, cancellationToken);
             this.logger?.Warn($"Cancelled ({source}): {operationName}", ex, stopwatch.ElapsedMilliseconds);
             throw;
         } catch (Exception ex) {
@@ -52,7 +52,7 @@ internal abstract class AzureServiceBase<TConfig>(TConfig config, IMemoryCache m
             this.logger?.Info(operationName, stopwatch.ElapsedMilliseconds);
         } catch (OperationCanceledException ex) {
             stopwatch.Stop();
-            string source = GetCancellationSource(ex, cancellationToken);
+            CancellationSource source = GetCancellationSource(ex, cancellationToken);
             this.logger?.Warn($"Cancelled ({source}): {operationName}", ex, stopwatch.ElapsedMilliseconds);
             throw;
         } catch (Exception ex) {
@@ -89,14 +89,14 @@ internal abstract class AzureServiceBase<TConfig>(TConfig config, IMemoryCache m
     /// Determines whether a cancellation was initiated by the caller (e.g., client disconnect,
     /// HttpContext.RequestAborted) or by the server (e.g., internal timeout, shutdown).
     /// </summary>
-    internal static string GetCancellationSource(OperationCanceledException ex, CancellationToken callerToken) {
+    internal static CancellationSource GetCancellationSource(OperationCanceledException ex, CancellationToken callerToken) {
         if (callerToken.IsCancellationRequested) {
-            return "caller";
+            return CancellationSource.Caller;
         }
         if (ex.CancellationToken != CancellationToken.None && ex.CancellationToken.IsCancellationRequested) {
-            return "server";
+            return CancellationSource.Server;
         }
-        return "unknown";
+        return CancellationSource.Unknown;
     }
 }
 
@@ -112,7 +112,7 @@ internal static class AzureServiceBaseHelpers {
             logger.Info(operationName, stopwatch.ElapsedMilliseconds);
         } catch (OperationCanceledException ex) {
             stopwatch.Stop();
-            string source = AzureServiceBase<object>.GetCancellationSource(ex, cancellationToken);
+            CancellationSource source = AzureServiceBase<object>.GetCancellationSource(ex, cancellationToken);
             logger.Warn($"Cancelled ({source}): {operationName}", ex, stopwatch.ElapsedMilliseconds);
             throw;
         } catch (Exception ex) {
@@ -131,7 +131,7 @@ internal static class AzureServiceBaseHelpers {
             return result;
         } catch (OperationCanceledException ex) {
             stopwatch.Stop();
-            string source = AzureServiceBase<object>.GetCancellationSource(ex, cancellationToken);
+            CancellationSource source = AzureServiceBase<object>.GetCancellationSource(ex, cancellationToken);
             logger.Warn($"Cancelled ({source}): {operationName}", ex, stopwatch.ElapsedMilliseconds);
             throw;
         } catch (Exception ex) {

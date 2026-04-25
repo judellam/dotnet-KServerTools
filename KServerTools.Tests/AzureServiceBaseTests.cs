@@ -229,7 +229,7 @@ public class AzureServiceBaseTests {
             () => service.LoggedOperationAsync<int>("cancelled-op", () => { cts.Token.ThrowIfCancellationRequested(); return Task.FromResult(0); }, cts.Token));
 
         logger.Verify(l => l.Warn(
-            It.Is<string>(s => s.Contains("Cancelled (caller)") && s.Contains("cancelled-op")),
+            It.Is<string>(s => s.Contains("Cancelled (Caller)") && s.Contains("cancelled-op")),
             It.IsAny<Exception>(), It.IsAny<long?>(),
             It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
         logger.Verify(l => l.Error(
@@ -249,7 +249,7 @@ public class AzureServiceBaseTests {
             () => service.LoggedOperationAsync("void-cancel", () => { cts.Token.ThrowIfCancellationRequested(); return Task.CompletedTask; }, cts.Token));
 
         logger.Verify(l => l.Warn(
-            It.Is<string>(s => s.Contains("Cancelled (caller)")),
+            It.Is<string>(s => s.Contains("Cancelled (Caller)")),
             It.IsAny<Exception>(), It.IsAny<long?>(),
             It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
     }
@@ -268,7 +268,7 @@ public class AzureServiceBaseTests {
             () => service.LoggedOperationAsync<int>("server-cancel", () => { serverCts.Token.ThrowIfCancellationRequested(); return Task.FromResult(0); }, callerCts.Token));
 
         logger.Verify(l => l.Warn(
-            It.Is<string>(s => s.Contains("Cancelled (server)")),
+            It.Is<string>(s => s.Contains("Cancelled (Server)")),
             It.IsAny<Exception>(), It.IsAny<long?>(),
             It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
     }
@@ -283,7 +283,7 @@ public class AzureServiceBaseTests {
             () => service.LoggedOperationAsync<int>("no-token", () => throw new TaskCanceledException("cancelled")));
 
         logger.Verify(l => l.Warn(
-            It.Is<string>(s => s.Contains("Cancelled (unknown)")),
+            It.Is<string>(s => s.Contains("Cancelled (Unknown)")),
             It.IsAny<Exception>(), It.IsAny<long?>(),
             It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
     }
@@ -293,7 +293,7 @@ public class AzureServiceBaseTests {
         using var cts = new CancellationTokenSource();
         cts.Cancel();
         var ex = new OperationCanceledException(cts.Token);
-        Assert.Equal("caller", AzureServiceBase<TestConfig>.GetCancellationSource(ex, cts.Token));
+        Assert.Equal(CancellationSource.Caller, AzureServiceBase<TestConfig>.GetCancellationSource(ex, cts.Token));
     }
 
     [Fact]
@@ -302,12 +302,12 @@ public class AzureServiceBaseTests {
         using var serverCts = new CancellationTokenSource();
         serverCts.Cancel();
         var ex = new OperationCanceledException(serverCts.Token);
-        Assert.Equal("server", AzureServiceBase<TestConfig>.GetCancellationSource(ex, callerCts.Token));
+        Assert.Equal(CancellationSource.Server, AzureServiceBase<TestConfig>.GetCancellationSource(ex, callerCts.Token));
     }
 
     [Fact]
     public void GetCancellationSource_NoTokenInfo_ReturnsUnknown() {
         var ex = new OperationCanceledException("cancelled");
-        Assert.Equal("unknown", AzureServiceBase<TestConfig>.GetCancellationSource(ex, CancellationToken.None));
+        Assert.Equal(CancellationSource.Unknown, AzureServiceBase<TestConfig>.GetCancellationSource(ex, CancellationToken.None));
     }
 }

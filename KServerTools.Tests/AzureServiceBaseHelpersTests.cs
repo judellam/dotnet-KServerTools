@@ -65,7 +65,7 @@ public class AzureServiceBaseHelpersTests {
             () => AzureServiceBaseHelpers.LoggedOperationAsync(logger.Object, "cancelled-upload", () => { cts.Token.ThrowIfCancellationRequested(); return Task.CompletedTask; }, cts.Token));
 
         logger.Verify(l => l.Warn(
-            It.Is<string>(s => s.Contains("Cancelled (caller)")),
+            It.Is<string>(s => s.Contains("Cancelled (Caller)")),
             It.IsAny<Exception>(), It.IsAny<long?>(),
             It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
         logger.Verify(l => l.Error(
@@ -85,7 +85,7 @@ public class AzureServiceBaseHelpersTests {
                 () => { serverCts.Token.ThrowIfCancellationRequested(); return Task.FromResult(0); }, callerCts.Token));
 
         logger.Verify(l => l.Warn(
-            It.Is<string>(s => s.Contains("Cancelled (server)")),
+            It.Is<string>(s => s.Contains("Cancelled (Server)")),
             It.IsAny<Exception>(), It.IsAny<long?>(),
             It.IsAny<string>(), It.IsAny<int>(), It.IsAny<string>()), Times.Once);
     }
